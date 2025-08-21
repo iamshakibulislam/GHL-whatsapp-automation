@@ -135,3 +135,49 @@ class GoHighLevelTokenHealthMiddleware(MiddlewareMixin):
         
         path = request.path
         return any(pattern in path for pattern in ghl_patterns)
+
+
+class GoHighLevelIframeMiddleware:
+    """
+    Middleware to handle iframe embedding for GoHighLevel
+    """
+    
+    def __init__(self, get_response):
+        self.get_response = get_response
+    
+    def __call__(self, request):
+        response = self.get_response(request)
+        
+        # Check if this is a GoHighLevel iframe request
+        if self._is_ghl_iframe_request(request):
+            # Set headers for iframe embedding
+            response['X-Frame-Options'] = 'ALLOWALL'
+            response['Access-Control-Allow-Origin'] = '*'
+            response['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+            response['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+            response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            
+            # Add Content Security Policy for iframe embedding
+            response['Content-Security-Policy'] = "frame-ancestors 'self' *.gohighlevel.com *.leadconnectorhq.com;"
+        
+        return response
+    
+    def _is_ghl_iframe_request(self, request):
+        """
+        Check if this is a GoHighLevel iframe request
+        """
+        # Check referer header
+        referer = request.META.get('HTTP_REFERER', '')
+        if any(domain in referer.lower() for domain in ['gohighlevel.com', 'leadconnectorhq.com']):
+            return True
+        
+        # Check user agent
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
+        if 'gohighlevel' in user_agent.lower():
+            return True
+        
+        # Check if it's an iframe request
+        if request.META.get('HTTP_SEC_FETCH_DEST') == 'iframe':
+            return True
+        
+        return False

@@ -44,6 +44,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # Add CORS middleware
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -53,6 +54,7 @@ MIDDLEWARE = [
     # GoHighLevel token management middleware
     'ghl_integration.middleware.GoHighLevelTokenMiddleware',
     'ghl_integration.middleware.GoHighLevelTokenHealthMiddleware',
+    'ghl_integration.middleware.GoHighLevelIframeMiddleware',  # Add this line
 ]
 
 ROOT_URLCONF = 'whatreach.urls'
@@ -121,6 +123,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [
+    BASE_DIR / 'ghl_integration' / 'static',
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -128,9 +134,12 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # GoHighLevel OAuth Configuration
-GHL_CLIENT_ID = '68a6c0fcfe0b684454802406-mel721b5'  # Replace with your actual client ID
-GHL_CLIENT_SECRET = '2262c009-6eda-4953-8005-7dfd1791db16'  # Replace with your actual client secret
-GHL_REDIRECT_URI = 'https://814e0c0adec4.ngrok-free.app/app/callback/'  # Update for production
+GHL_CLIENT_ID = '68a6c0fcfe0b684454802406-mel721b5'
+GHL_CLIENT_SECRET = '2262c009-6eda-4953-8005-7dfd1791db16'
+GHL_REDIRECT_URI = 'https://814e0c0adec4.ngrok-free.app/app/callback/'
+
+# GoHighLevel Shared Secret for Decryption
+GHL_SHARED_SECRET = '3451a19d-c451-4b24-9323-f8e000cbb805'
 
 # Django Crontab Configuration
 CRONJOBS = [
@@ -148,5 +157,36 @@ CRONJOBS = [
 CRONTAB_LOCK_JOBS = True  # Prevent multiple instances of the same job
 CRONTAB_COMMAND_PREFIX = 'DJANGO_SETTINGS_MODULE=whatreach.settings'
 CRONTAB_PYTHON_EXECUTABLE = 'python'
+
+# Security settings
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'ALLOWALL'  # Allow iframe embedding for GoHighLevel
+
+# CSRF settings for GoHighLevel integration
+CSRF_TRUSTED_ORIGINS = [
+    'https://814e0c0adec4.ngrok-free.app',
+    'https://app.gohighlevel.com',
+    'https://gohighlevel.com',
+    'https://leadconnectorhq.com',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+
+# CORS settings for GoHighLevel
+CORS_ALLOWED_ORIGINS = [
+    'https://814e0c0adec4.ngrok-free.app',
+    'https://app.gohighlevel.com',
+    'https://gohighlevel.com',
+    'https://leadconnectorhq.com',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = True  # For development - remove in production
+
+# Additional security headers for GoHighLevel
+SECURE_REFERRER_POLICY = 'no-referrer-when-downgrade'
 
 

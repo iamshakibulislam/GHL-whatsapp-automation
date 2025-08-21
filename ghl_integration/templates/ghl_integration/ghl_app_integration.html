@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatReach - GoHighLevel Integration</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        .content {
+            padding: 30px;
+        }
+        .status-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #007bff;
+        }
+        .status-section h3 {
+            margin: 0 0 15px 0;
+            color: #007bff;
+        }
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .data-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        .data-item label {
+            display: block;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .data-item span {
+            display: block;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #495057;
+            border: 1px solid #dee2e6;
+        }
+        .log-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .log-section h3 {
+            margin: 0 0 15px 0;
+            color: #495057;
+        }
+        #log {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            border: 1px solid #4a5568;
+        }
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #c3e6cb;
+            text-align: center;
+        }
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #f5c6cb;
+            text-align: center;
+        }
+        .info-message {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #bee5eb;
+            text-align: center;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .iframe-info {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #ffeaa7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 WhatReach</h1>
+            <p>GoHighLevel Integration Dashboard</p>
+        </div>
+        
+        <div class="content">
+            {% if is_authenticated %}
+                <!-- Authenticated User Content -->
+                <div class="status-section">
+                    <h3>✅ Authenticated User</h3>
+                    <div id="status">🎉 Welcome back! You're authenticated via session.</div>
+                </div>
+
+                <div class="data-grid">
+                    <div class="data-item">
+                        <label>User ID</label>
+                        <span id="user-id">{{ user_data.user_id }}</span>
+                    </div>
+                    <div class="data-item">
+                        <label>User Email</label>
+                        <span id="user-email">{{ user_data.user_email|default:"N/A" }}</span>
+                    </div>
+                    <div class="data-item">
+                        <label>Company ID</label>
+                        <span id="company-id">{{ user_data.company_id }}</span>
+                    </div>
+                    <div class="data-item">
+                        <label>Location ID</label>
+                        <span id="location-id">{{ user_data.location_id }}</span>
+                    </div>
+                    <div class="data-item">
+                        <label>Session Created</label>
+                        <span id="session-created">{{ session_created|default:"N/A" }}</span>
+                    </div>
+                    <div class="data-item">
+                        <label>Last Activity</label>
+                        <span id="last-activity">{{ last_activity|default:"N/A" }}</span>
+                    </div>
+                </div>
+
+                {% if integration %}
+                    <div class="status-section">
+                        <h3>🔗 GoHighLevel Integration</h3>
+                        <div class="data-grid">
+                            <div class="data-item">
+                                <label>Location Name</label>
+                                <span>{{ integration.location_name|default:"N/A" }}</span>
+                            </div>
+                            <div class="data-item">
+                                <label>Company Name</label>
+                                <span>{{ integration.company_name|default:"N/A" }}</span>
+                            </div>
+                            <div class="data-item">
+                                <label>Integration Status</label>
+                                <span>✅ Active</span>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="info-message">
+                        <h4>⚠️ Integration Not Found</h4>
+                        <p>No GoHighLevel integration found for location ID: {{ user_data.location_id }}</p>
+                        <p>This usually means the app needs to be installed or the integration is inactive.</p>
+                    </div>
+                {% endif %}
+
+                <div class="log-section">
+                    <h3>📝 Session Information</h3>
+                    <div id="log">
+                        ✅ User authenticated via session
+                        📅 Session created: {{ session_created|default:"N/A" }}
+                        🕒 Last activity: {{ last_activity|default:"N/A" }}
+                        🔑 Detection methods: {{ user_data.detection_methods|join:", " }}
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <button class="button" onclick="logoutUser()">🚪 Logout</button>
+                        <button class="button" onclick="refreshSession()">🔄 Refresh Session</button>
+                    </div>
+                </div>
+
+            {% else %}
+                <!-- Unauthenticated User Content -->
+                <div class="status-section">
+                    <h3>🔐 Authentication Required</h3>
+                    <div id="status">{{ message|default:"Please authenticate with GoHighLevel to continue." }}</div>
+                </div>
+
+                <div class="data-grid">
+                    <div class="data-item">
+                        <label>User ID</label>
+                        <span id="user-id">⏳ Waiting for authentication...</span>
+                    </div>
+                    <div class="data-item">
+                        <label>User Email</label>
+                        <span id="user-email">⏳ Waiting for authentication...</span>
+                    </div>
+                    <div class="data-item">
+                        <label>User Name</label>
+                        <span id="user-name">⏳ Waiting for authentication...</span>
+                    </div>
+                    <div class="data-item">
+                        <label>User Role</label>
+                        <span id="user-role">⏳ Waiting for authentication...</span>
+                    </div>
+                    <div class="data-item">
+                        <label>Location ID</label>
+                        <span id="location-id">⏳ Waiting for authentication...</span>
+                    </div>
+                    <div class="data-item">
+                        <label>Location Name</label>
+                        <span id="location-name">⏳ Waiting for authentication...</span>
+                    </div>
+                    <div class="data-item">
+                        <label>Company ID</label>
+                        <span id="company-id">⏳ Waiting for authentication...</span>
+                    </div>
+                </div>
+
+                <div class="log-section">
+                    <h3>📝 Activity Log</h3>
+                    <div id="log">🚀 WhatReach: Initializing GoHighLevel App...</div>
+                </div>
+
+                <div class="iframe-info">
+                    <h4>ℹ️ Iframe Information</h4>
+                    <p>This page is designed to be loaded within GoHighLevel's iframe. If you're seeing this page directly, it won't function properly.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- CryptoJS Library for GoHighLevel Decryption -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+    <script>
+        class GoHighLevelApp {
+            constructor() {
+                this.logElement = document.getElementById('log');
+                this.dataElement = document.getElementById('data');
+                this.statusElement = document.getElementById('status');
+                this.userIdElement = document.getElementById('user-id');
+                this.userEmailElement = document.getElementById('user-email');
+                this.userNameElement = document.getElementById('user-name');
+                this.userRoleElement = document.getElementById('user-role');
+                this.locationIdElement = document.getElementById('location-id');
+                this.locationNameElement = document.getElementById('location-name');
+                this.companyIdElement = document.getElementById('company-id');
+                this.messageCount = 0;
+                this.userData = null;
+                this.locationData = null;
+                this.sharedSecret = '3451a19d-c451-4b24-9323-f8e000cbb805'; // Your shared secret
+                this.init();
+            }
+
+            init() {
+                this.log('🚀 WhatReach: Initializing GoHighLevel App...');
+                this.log(`🔑 Shared Secret: ${this.sharedSecret.substring(0, 8)}...${this.sharedSecret.substring(this.sharedSecret.length - 8)}`);
+                
+                if (window.self === window.top) {
+                    this.updateStatus('❌ Not in iframe - this page should be loaded within GoHighLevel', 'error');
+                    this.log('❌ Not in iframe - this page should be loaded within GoHighLevel');
+                } else {
+                    this.updateStatus('✅ In iframe mode - setting up communication...', 'success');
+                    this.log('✅ In iframe mode - setting up communication...');
+                    this.setupMessageListener();
+                    this.sendReadyMessage();
+                    this.requestUserData(); // Request user data immediately
+                }
+                this.setupIframeResizer();
+            }
+
+            setupMessageListener() {
+                this.log('🔧 Setting up message listener...');
+                window.addEventListener('message', (event) => {
+                    this.messageCount++;
+                    this.log(`📨 Message #${this.messageCount} received`);
+                    this.updateData(event.data);
+
+                    if (event.data && event.data.message) {
+                        switch (event.data.message) {
+                            case 'REQUEST_USER_DATA_RESPONSE':
+                            case 'USER_DATA':
+                            case 'AUTH_DATA':
+                                this.log('🎉 User data received');
+                                const data = event.data.payload || event.data.user || event.data;
+
+                                // Check if data is encrypted
+                                if (typeof data === 'string' && data.length > 100) {
+                                    this.log('🔐 Encrypted user data detected - decrypting...');
+
+                                    // Show encrypted data status
+                                    this.userIdElement.textContent = '🔐 Decrypting...';
+                                    this.userEmailElement.textContent = '🔐 Decrypting...';
+                                    this.userNameElement.textContent = '🔐 Decrypting...';
+                                    this.userRoleElement.textContent = '🔐 Decrypting...';
+
+                                    // Update status
+                                    this.updateStatus('🔐 Decrypting user data...', 'info');
+
+                                    // Decrypt using CryptoJS directly
+                                    this.decryptUserDataWithCryptoJS(data);
+
+                                } else if (data && typeof data === 'object') {
+                                    // Regular unencrypted data
+                                    this.userData = data;
+                                    if (data.id) this.userIdElement.textContent = data.id;
+                                    if (data.email) this.userEmailElement.textContent = data.email;
+                                    if (data.name || data.firstName) this.userNameElement.textContent = data.name || data.firstName;
+                                    if (data.role) this.userRoleElement.textContent = data.role;
+                                    this.updateStatus('✅ User data received successfully!', 'success');
+                                } else {
+                                    this.log('⚠️ User data format not recognized');
+                                    this.userIdElement.textContent = '⚠️ Format not recognized';
+                                    this.updateStatus('⚠️ User data format not recognized', 'warning');
+                                }
+                                break;
+                            case 'LOCATION_DATA':
+                                this.log('🎉 Location data received');
+                                this.locationData = event.data.payload || event.data.location || event.data;
+                                if (this.locationData.id) this.locationIdElement.textContent = this.locationData.id;
+                                if (this.locationData.name) this.locationNameElement.textContent = this.locationData.name;
+                                if (this.locationData.companyId) this.companyIdElement.textContent = this.locationData.companyId;
+                                break;
+                            default:
+                                this.log(`📨 Received: ${event.data.message}`);
+                                if (event.data.user || event.data.location || event.data.payload) {
+                                    this.log('✅ Message contains user/location data!');
+                                    this.updateStatus('✅ Data received!', 'success');
+                                }
+                        }
+                    } else if (event.data && (event.data.user || event.data.location)) {
+                        this.log('✅ Received direct data without message wrapper!');
+                        this.updateStatus('✅ Direct data received!', 'success');
+                        if (event.data.user) {
+                            this.userData = event.data.user;
+                            if (this.userData.id) this.userIdElement.textContent = this.userData.id;
+                            if (this.userData.email) this.userIdElement.textContent = this.userData.email;
+                            if (this.userData.name || this.userData.firstName) this.userNameElement.textContent = this.userData.name || this.userData.firstName;
+                            if (this.userData.role) this.userRoleElement.textContent = this.userData.role;
+                        }
+                        if (event.data.location) {
+                            this.locationData = event.data.location;
+                            if (this.locationData.id) this.locationIdElement.textContent = this.locationData.id;
+                            if (this.locationData.name) this.locationNameElement.textContent = this.locationData.name;
+                            if (this.locationData.companyId) this.companyIdElement.textContent = this.locationData.companyId;
+                        }
+                    }
+                    this.showInfoSections();
+                });
+                this.log('✅ Message listener set up successfully');
+            }
+
+            decryptUserDataWithCryptoJS(encryptedData) {
+                this.log('🔓 Decrypting user data using CryptoJS...');
+
+                try {
+                    // Use the EXACT CryptoJS method from GoHighLevel docs
+                    const decrypted = CryptoJS.AES.decrypt(
+                        encryptedData,
+                        this.sharedSecret
+                    ).toString(CryptoJS.enc.Utf8);
+
+                    this.log('✅ CryptoJS decryption successful!');
+
+                    if (decrypted) {
+                        try {
+                            // Parse the decrypted JSON
+                            const userData = JSON.parse(decrypted);
+                            this.log('✅ JSON parsing successful!');
+
+                            // Update UI with decrypted data
+                            if (userData.userId) this.userIdElement.textContent = userData.userId;
+                            if (userData.email) this.userEmailElement.textContent = userData.email;
+                            if (userData.userName) this.userNameElement.textContent = userData.userName;
+                            if (userData.role) this.userRoleElement.textContent = userData.role;
+                            if (userData.activeLocation) this.locationIdElement.textContent = userData.activeLocation;
+                            if (userData.companyId) this.companyIdElement.textContent = userData.companyId;
+
+                            this.updateStatus('🎉 User data decrypted successfully!', 'success');
+                            this.showDecryptionSuccess(userData);
+
+                            // Send the encrypted data to backend for Python console logging
+                            this.sendEncryptedDataToBackend(encryptedData, userData);
+
+                        } catch (jsonError) {
+                            this.log(`❌ JSON parsing failed: ${jsonError.message}`);
+                            this.updateStatus('⚠️ Decryption successful but JSON parsing failed', 'warning');
+                            this.showDecryptionFailed('JSON parsing failed: ' + jsonError.message);
+                        }
+                    } else {
+                        this.log('❌ Decryption returned empty result');
+                        this.updateStatus('❌ Decryption returned empty result', 'error');
+                        this.showDecryptionFailed('Decryption returned empty result');
+                    }
+
+                } catch (decryptError) {
+                    this.log(`❌ CryptoJS decryption failed: ${decryptError.message}`);
+                    this.updateStatus('❌ CryptoJS decryption failed', 'error');
+                    this.showDecryptionFailed('CryptoJS decryption failed: ' + decryptError.message);
+                }
+            }
+
+            showDecryptionSuccess(decryptedData) {
+                this.log('🎉 Showing decryption success...');
+                const successDiv = document.createElement('div');
+                successDiv.className = 'success-message';
+                successDiv.innerHTML = `
+                    <h3>🎉 User Data Successfully Decrypted!</h3>
+                    <p>Welcome to WhatReach!</p>
+                    <div style="margin-top: 15px; text-align: left;">
+                        <p><strong>User ID:</strong> ${decryptedData.userId || 'N/A'}</p>
+                        <p><strong>Email:</strong> ${decryptedData.email || 'N/A'}</p>
+                        <p><strong>Company ID:</strong> ${decryptedData.companyId || 'N/A'}</p>
+                        <p><strong>Active Location:</strong> ${decryptedData.activeLocation || 'N/A'}</p>
+                    </div>
+                `;
+                const header = document.querySelector('.header');
+                header.parentNode.insertBefore(successDiv, header.nextSibling);
+                setTimeout(() => {
+                    if (successDiv.parentNode) {
+                        successDiv.parentNode.removeChild(successDiv);
+                    }
+                }, 10000);
+            }
+
+            showDecryptionFailed(errorMessage) {
+                this.log('❌ Showing decryption failed...');
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message';
+                errorDiv.innerHTML = `
+                    <h3>❌ Decryption Failed</h3>
+                    <p>Could not decrypt user data from GoHighLevel.</p>
+                    <p><strong>Error:</strong> ${errorMessage}</p>
+                    <p>Please check your shared secret key configuration.</p>
+                `;
+                const header = document.querySelector('.header');
+                header.parentNode.insertBefore(errorDiv, header.nextSibling);
+                setTimeout(() => {
+                    if (errorDiv.parentNode) {
+                        errorDiv.parentNode.removeChild(errorDiv);
+                    }
+                }, 15000);
+            }
+
+            log(message, data = null) {
+                const timestamp = new Date().toLocaleTimeString();
+                const logMessage = `[${timestamp}] ${message}`;
+                this.logElement.textContent += logMessage + '\n';
+                
+                if (data) {
+                    this.logElement.textContent += JSON.stringify(data, null, 2) + '\n';
+                }
+                
+                this.logElement.scrollTop = this.logElement.scrollHeight;
+                console.log(logMessage, data);
+            }
+
+            updateStatus(message, type = 'info') {
+                this.statusElement.textContent = message;
+                this.statusElement.className = `status-${type}`;
+            }
+
+            updateData(data) {
+                if (this.dataElement) {
+                    this.dataElement.textContent = JSON.stringify(data, null, 2);
+                }
+            }
+
+            sendReadyMessage() {
+                this.log('📤 Sending ready message to parent...');
+                if (window.parent && window.parent !== window.self) {
+                    window.parent.postMessage({
+                        message: 'APP_READY',
+                        timestamp: new Date().toISOString()
+                    }, '*');
+                }
+            }
+
+            requestUserData() {
+                this.log('📤 Requesting user data from parent...');
+                if (window.parent && window.parent !== window.self) {
+                    // Send multiple types of requests to see which one works
+                    const requests = [
+                        { message: 'REQUEST_USER_DATA' },
+                        { message: 'GET_USER_DATA' },
+                        { message: 'AUTH_DATA_REQUEST' },
+                        { message: 'USER_CONTEXT_REQUEST' }
+                    ];
+
+                    requests.forEach((request, index) => {
+                        setTimeout(() => {
+                            this.log(`📤 Sending request ${index + 1}: ${request.message}`);
+                            window.parent.postMessage({
+                                ...request,
+                                timestamp: new Date().toISOString()
+                            }, '*');
+                        }, index * 1000); // Send requests 1 second apart
+                    });
+                }
+            }
+
+            showInfoSections() {
+                // Show additional info sections if we have data
+                if (this.userData || this.locationData) {
+                    this.log('📊 Data received, showing info sections...');
+                }
+            }
+
+            setupIframeResizer() {
+                // Auto-resize iframe to fit content
+                if (window.parent && window.parent !== window.self) {
+                    const resizeObserver = new ResizeObserver(() => {
+                        const height = document.documentElement.scrollHeight;
+                        window.parent.postMessage({
+                            message: 'RESIZE_IFRAME',
+                            height: height
+                        }, '*');
+                    });
+                    resizeObserver.observe(document.body);
+                }
+            }
+
+            logoutUser() {
+                // This will be called from the HTML button
+                window.location.href = '/app/logout/';
+            }
+
+            refreshSession() {
+                // This will be called from the HTML button
+                window.location.reload();
+            }
+
+            sendEncryptedDataToBackend(encryptedData, decryptedData) {
+                this.log('📤 Sending encrypted data to backend for logging...');
+
+                const contextData = {
+                    encrypted_user_data: encryptedData,
+                    decrypted_user_data: decryptedData,
+                    timestamp: new Date().toISOString(),
+                    method: 'postMessage',
+                    needs_decryption: false,
+                    decryption_successful: true
+                };
+
+                fetch('/app/user-identification/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        context: contextData,
+                        timestamp: new Date().toISOString()
+                    })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    this.log('✅ Data sent to backend successfully');
+                    console.log('✅ Backend response:', result);
+                })
+                .catch(error => {
+                    this.log(`❌ Error sending data to backend: ${error.message}`);
+                    console.log('❌ Backend error:', error);
+                });
+            }
+        }
+
+        // Global functions for HTML buttons
+        function logoutUser() {
+            fetch('/app/logout/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                console.log('❌ Logout error:', error);
+                window.location.reload();
+            });
+        }
+
+        function refreshSession() {
+            window.location.reload();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Only initialize the app if user is not authenticated
+            {% if not is_authenticated %}
+                new GoHighLevelApp();
+            {% else %}
+                console.log('✅ User already authenticated via session');
+                console.log('User data:', {
+                    user_id: '{{ user_data.user_id }}',
+                    user_email: '{{ user_data.user_email|default:"" }}',
+                    company_id: '{{ user_data.company_id }}',
+                    location_id: '{{ user_data.location_id }}'
+                });
+            {% endif %}
+        });
+    </script>
+</body>
+</html>

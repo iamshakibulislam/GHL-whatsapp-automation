@@ -1,0 +1,43 @@
+{
+  "name": "WhatReach",
+  "description": "GoHighLevel Integration App for Lead Management",
+  "version": "1.0.0",
+  "manifest_version": 2,
+  "app": {
+    "url": "https://yourdomain.com/app/",
+    "launch_url": "https://yourdomain.com/app/",
+    "container": "panel",
+    "width": 1200,
+    "height": 800
+  },
+  "sidebar": {
+    "enabled": true,
+    "title": "WhatReach",
+    "description": "Lead Management Integration",
+    "icon": "https://yourdomain.com/app/static/ghl_integration/icon.png",
+    "color": "#667eea"
+  },
+  "permissions": [
+    "contacts.readonly",
+    "contacts.write",
+    "locations.readonly",
+    "users.readonly"
+  ],
+  "oauth": {
+    "client_id": "68a6c0fcfe0b684454802406-mel721b5",
+    "redirect_uri": "https://yourdomain.com/app/callback/",
+    "scopes": [
+      "contacts.readonly",
+      "contacts.write",
+      "locations.readonly",
+      "users.readonly"
+    ]
+  },
+  "webhooks": {
+    "url": "https://yourdomain.com/app/webhook/",
+    "events": [
+      "app.installed",
+      "app.uninstalled"
+    ]
+  }
+}

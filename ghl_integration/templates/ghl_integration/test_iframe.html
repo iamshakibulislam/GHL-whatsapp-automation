@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatReach - Test Iframe</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .status {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .status h3 {
+            margin-bottom: 15px;
+            color: #ffd700;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .info-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .info-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .success-message {
+            background: rgba(40, 167, 69, 0.3);
+            border: 1px solid rgba(40, 167, 69, 0.5);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .warning-message {
+            background: rgba(255, 193, 7, 0.3);
+            border: 1px solid rgba(255, 193, 7, 0.5);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .debug-info {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            margin-top: 20px;
+        }
+        
+        .debug-title {
+            color: #ffd700;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .debug-item {
+            margin-bottom: 8px;
+        }
+        
+        .debug-label {
+            color: #87ceeb;
+            font-weight: 600;
+        }
+        
+        .debug-value {
+            color: #98fb98;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 WhatReach</h1>
+            <p>Iframe Test Page</p>
+        </div>
+        
+        <div id="loading-section" class="loading">
+            <div class="spinner"></div>
+            Detecting GoHighLevel context...
+        </div>
+        
+        <div id="main-content" style="display: none;">
+            <div id="status-content"></div>
+        </div>
+        
+        <div class="debug-info">
+            <div class="debug-title">🔍 Debug Information</div>
+            <div class="debug-item">
+                <span class="debug-label">Location ID:</span>
+                <span class="debug-value" id="debug-location-id">Detecting...</span>
+            </div>
+            <div class="debug-item">
+                <span class="debug-label">User ID:</span>
+                <span class="debug-value" id="debug-user-id">Detecting...</span>
+            </div>
+            <div class="debug-item">
+                <span class="debug-label">Company ID:</span>
+                <span class="debug-value" id="debug-company-id">Detecting...</span>
+            </div>
+            <div class="debug-item">
+                <span class="debug-label">Contact ID:</span>
+                <span class="debug-value" id="debug-contact-id">Detecting...</span>
+            </div>
+            <div class="debug-item">
+                <span class="debug-label">API Status:</span>
+                <span class="debug-value" id="debug-api-status">Checking...</span>
+            </div>
+            <div class="debug-item">
+                <span class="debug-label">Detection Methods:</span>
+                <span class="debug-value" id="debug-methods">Analyzing...</span>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // GoHighLevel User Context Detection
+        class GoHighLevelContext {
+            constructor() {
+                this.context = {};
+                this.apiAvailable = false;
+                this.init();
+            }
+            
+            async init() {
+                console.log('🚀 WhatReach Test Iframe: Initializing GoHighLevel context detection...');
+                
+                // Method 1: Try GoHighLevel JavaScript API
+                await this.detectJavaScriptAPI();
+                
+                // Method 2: Try URL parameters (fallback)
+                this.detectURLParameters();
+                
+                // Method 3: Try referer analysis
+                this.detectRefererInfo();
+                
+                // Method 4: Try postMessage from parent
+                this.detectParentMessage();
+                
+                // Update UI with detected context
+                this.updateUI();
+                
+                // Send context to Django backend
+                this.sendContextToBackend();
+            }
+            
+            async detectJavaScriptAPI() {
+                try {
+                    console.log('🔍 Method 1: Checking GoHighLevel JavaScript API...');
+                    
+                    // Check if GoHighLevel global object exists
+                    if (typeof window.GoHighLevel !== 'undefined') {
+                        console.log('✅ GoHighLevel API detected!');
+                        this.apiAvailable = true;
+                        
+                        // Try to get current user context
+                        if (window.GoHighLevel.getCurrentUser) {
+                            try {
+                                const user = await window.GoHighLevel.getCurrentUser();
+                                console.log('👤 Current user:', user);
+                                this.context.user = user;
+                            } catch (e) {
+                                console.log('⚠️ Could not get current user:', e);
+                            }
+                        }
+                        
+                        // Try to get current location context
+                        if (window.GoHighLevel.getCurrentLocation) {
+                            try {
+                                const location = await window.GoHighLevel.getCurrentLocation();
+                                console.log('📍 Current location:', location);
+                                this.context.location = location;
+                            } catch (e) {
+                                console.log('⚠️ Could not get current location:', e);
+                            }
+                        }
+                        
+                        // Try to get current contact context
+                        if (window.GoHighLevel.getCurrentContact) {
+                            try {
+                                const contact = await window.GoHighLevel.getCurrentContact();
+                                console.log('📞 Current contact:', contact);
+                                this.context.contact = contact;
+                            } catch (e) {
+                                console.log('⚠️ Could not get current contact:', e);
+                            }
+                        }
+                        
+                        // Listen for context changes
+                        this.setupContextListeners();
+                        
+                    } else {
+                        console.log('❌ GoHighLevel API not available');
+                    }
+                } catch (e) {
+                    console.log('❌ Error detecting GoHighLevel API:', e);
+                }
+            }
+            
+            detectURLParameters() {
+                console.log('🔍 Method 2: Checking URL parameters...');
+                const urlParams = new URLSearchParams(window.location.search);
+                const params = {};
+                
+                // Common GoHighLevel parameters
+                ['locationId', 'userId', 'companyId', 'contactId', 'funnelId', 'pageId', 'campaignId'].forEach(param => {
+                    const value = urlParams.get(param);
+                    if (value) {
+                        params[param] = value;
+                        console.log(`✅ Found ${param}:`, value);
+                    }
+                });
+                
+                if (Object.keys(params).length > 0) {
+                    this.context.urlParams = params;
+                } else {
+                    console.log('❌ No URL parameters found');
+                }
+            }
+            
+            detectRefererInfo() {
+                console.log('🔍 Method 3: Analyzing referer...');
+                const referer = document.referrer;
+                
+                if (referer) {
+                    console.log('📍 Referer:', referer);
+                    this.context.referer = referer;
+                    
+                    // Extract domain info
+                    try {
+                        const url = new URL(referer);
+                        this.context.refererDomain = url.hostname;
+                        this.context.refererPath = url.pathname;
+                        
+                        // Check if it's GoHighLevel
+                        if (url.hostname.includes('gohighlevel.com') || url.hostname.includes('leadconnectorhq.com')) {
+                            console.log('✅ Referer is from GoHighLevel');
+                            this.context.isFromGHL = true;
+                        }
+                    } catch (e) {
+                        console.log('⚠️ Could not parse referer URL:', e);
+                    }
+                } else {
+                    console.log('❌ No referer found');
+                }
+            }
+            
+            detectParentMessage() {
+                console.log('🔍 Method 4: Setting up parent message listener...');
+                
+                // Listen for messages from parent (GoHighLevel)
+                window.addEventListener('message', (event) => {
+                    console.log('📨 Message received from parent:', event.data);
+                    
+                    if (event.data && event.data.type) {
+                        this.context.parentMessage = event.data;
+                        
+                        // Handle specific message types
+                        switch (event.data.type) {
+                            case 'ghl-user-context':
+                                console.log('✅ Received GoHighLevel user context:', event.data);
+                                this.context.ghlContext = event.data;
+                                break;
+                            case 'ghl-location-change':
+                                console.log('✅ Location changed:', event.data);
+                                this.context.locationChange = event.data;
+                                break;
+                            case 'ghl-contact-change':
+                                console.log('✅ Contact changed:', event.data);
+                                this.context.contactChange = event.data;
+                                break;
+                        }
+                        
+                        this.updateUI();
+                    }
+                });
+                
+                // Request context from parent
+                if (window.parent && window.parent !== window) {
+                    console.log('📤 Requesting context from parent...');
+                    window.parent.postMessage({
+                        type: 'whatreach-request-context',
+                        message: 'Please provide user context'
+                    }, '*');
+                }
+            }
+            
+            setupContextListeners() {
+                if (!this.apiAvailable) return;
+                
+                console.log('🔧 Setting up GoHighLevel context listeners...');
+                
+                // Listen for user changes
+                if (window.GoHighLevel.onUserChange) {
+                    window.GoHighLevel.onUserChange((user) => {
+                        console.log('👤 User changed:', user);
+                        this.context.userChange = user;
+                        this.updateUI();
+                    });
+                }
+                
+                // Listen for location changes
+                if (window.GoHighLevel.onLocationChange) {
+                    window.GoHighLevel.onLocationChange((location) => {
+                        console.log('📍 Location changed:', location);
+                        this.context.locationChange = location;
+                        this.updateUI();
+                    });
+                }
+                
+                // Listen for contact changes
+                if (window.GoHighLevel.onContactChange) {
+                    window.GoHighLevel.onContactChange((contact) => {
+                        console.log('📞 Contact changed:', contact);
+                        this.context.contactChange = contact;
+                        this.updateUI();
+                    });
+                }
+            }
+            
+            updateUI() {
+                console.log('🎨 Updating UI with context:', this.context);
+                
+                // Update debug info
+                this.updateDebugInfo();
+                
+                // Show main content if we have context
+                if (this.hasValidContext()) {
+                    this.showMainContent();
+                }
+            }
+            
+            updateDebugInfo() {
+                // Update debug values
+                const debugElements = {
+                    'debug-location-id': this.getContextValue(['location', 'id', 'urlParams', 'locationId']),
+                    'debug-user-id': this.getContextValue(['user', 'id', 'urlParams', 'userId']),
+                    'debug-company-id': this.getContextValue(['location', 'companyId', 'urlParams', 'companyId']),
+                    'debug-contact-id': this.getContextValue(['contact', 'id', 'urlParams', 'contactId']),
+                    'debug-api-status': this.apiAvailable ? 'Available' : 'Not Available',
+                    'debug-methods': this.getDetectionMethods()
+                };
+                
+                Object.entries(debugElements).forEach(([id, value]) => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.textContent = value || 'Not detected';
+                    }
+                });
+            }
+            
+            getContextValue(paths) {
+                for (const path of paths) {
+                    const value = this.getValueByPath(this.context, path);
+                    if (value) return value;
+                }
+                return null;
+            }
+            
+            getValueByPath(obj, path) {
+                return path.split('.').reduce((current, key) => current && current[key], obj);
+            }
+            
+            getDetectionMethods() {
+                const methods = [];
+                if (this.context.location) methods.push('JavaScript API - Location');
+                if (this.context.user) methods.push('JavaScript API - User');
+                if (this.context.contact) methods.push('JavaScript API - Contact');
+                if (this.context.urlParams) methods.push('URL Parameters');
+                if (this.context.referer) methods.push('Referer Analysis');
+                if (this.context.ghlContext) methods.push('Parent Message');
+                return methods.length > 0 ? methods.join(', ') : 'None';
+            }
+            
+            hasValidContext() {
+                return this.context.location || this.context.urlParams || this.context.ghlContext;
+            }
+            
+            showMainContent() {
+                document.getElementById('loading-section').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+                
+                // Populate main content based on context
+                this.populateMainContent();
+            }
+            
+            populateMainContent() {
+                const statusDiv = document.getElementById('status-content');
+                if (statusDiv) {
+                    statusDiv.innerHTML = `
+                        <div class="success-message">
+                            <h3>✅ Iframe Integration Working!</h3>
+                            <p>Your WhatReach app is successfully embedded in GoHighLevel.</p>
+                        </div>
+                        
+                        <div class="status">
+                            <h3>Context Detected</h3>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <div class="info-label">Location ID</div>
+                                    <div class="info-value">${this.getContextValue(['location', 'id', 'urlParams', 'locationId']) || 'N/A'}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">User ID</div>
+                                    <div class="info-value">${this.getContextValue(['user', 'id', 'urlParams', 'userId']) || 'N/A'}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Company ID</div>
+                                    <div class="info-value">${this.getContextValue(['location', 'companyId', 'urlParams', 'companyId']) || 'N/A'}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">API Status</div>
+                                    <div class="info-value">${this.apiAvailable ? 'Available' : 'Not Available'}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            async sendContextToBackend() {
+                try {
+                    console.log('📤 Sending context to Django backend...');
+                    
+                    const response = await fetch('/app/user-identification/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            // Removed CSRF token since we're using csrf_exempt
+                        },
+                        body: JSON.stringify({
+                            context: this.context,
+                            timestamp: new Date().toISOString()
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        console.log('✅ Context sent to backend:', result);
+                    } else {
+                        console.log('❌ Failed to send context to backend');
+                    }
+                } catch (e) {
+                    console.log('❌ Error sending context to backend:', e);
+                }
+            }
+        }
+        
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                new GoHighLevelContext();
+            });
+        } else {
+            new GoHighLevelContext();
+        }
+        
+        // Log initial state
+        console.log('=== WhatReach Test Iframe - Initializing ===');
+        console.log('Window location:', window.location.href);
+        console.log('Referer:', document.referrer);
+        console.log('User agent:', navigator.userAgent);
+        console.log('==========================================');
+        
+        // Send message to parent (GoHighLevel)
+        if (window.parent && window.parent !== window) {
+            window.parent.postMessage({
+                type: 'whatreach-iframe-ready',
+                message: 'Iframe loaded successfully',
+                timestamp: new Date().toISOString()
+            }, '*');
+            
+            console.log('WhatReach Test Iframe: Message sent to parent');
+        }
+        
+        // Listen for messages from parent
+        window.addEventListener('message', function(event) {
+            console.log('WhatReach Test Iframe: Message received from parent', event.data);
+        });
+        
+        // Auto-resize iframe
+        function resizeIframe() {
+            const height = document.body.scrollHeight;
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'whatreach-iframe-resize',
+                    height: height
+                }, '*');
+            }
+        }
+        
+        // Resize on load and window resize
+        window.addEventListener('load', resizeIframe);
+        window.addEventListener('resize', resizeIframe);
+    </script>
+</body>
+</html>

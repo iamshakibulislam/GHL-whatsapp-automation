@@ -1,0 +1,2085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatReach - GoHighLevel Integration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .content {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 20px;
+        }
+        
+        .status-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .status-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .status-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .status-icon.success {
+            background: rgba(40, 167, 69, 0.3);
+            border: 2px solid rgba(40, 167, 69, 0.6);
+        }
+        
+        .status-icon.info {
+            background: rgba(0, 123, 255, 0.3);
+            border: 2px solid rgba(0, 123, 255, 0.6);
+        }
+        
+        .status-icon.warning {
+            background: rgba(255, 193, 7, 0.3);
+            border: 2px solid rgba(255, 193, 7, 0.6);
+        }
+        
+        .status-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        
+        .status-details {
+            font-size: 1rem;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+        
+        .integration-info {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .integration-info h3 {
+            margin-bottom: 15px;
+            color: #ffd700;
+            font-size: 1.2rem;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .info-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .info-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-value {
+            font-weight: 600;
+            font-size: 1rem;
+            word-break: break-all;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #1e7e34;
+            transform: translateY(-2px);
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-warning:hover {
+            background: #e0a800;
+            transform: translateY(-2px);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: #007bff;
+            border: 2px solid #007bff;
+        }
+        
+        .btn-outline:hover {
+            background: #007bff;
+            color: white;
+        }
+        
+        .debug-section {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .debug-title {
+            color: #ffd700;
+            margin-bottom: 15px;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .debug-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        
+        .debug-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .debug-label {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-bottom: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        
+        .debug-value {
+            font-size: 0.9rem;
+            font-weight: 500;
+            word-break: break-all;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.1rem;
+            opacity: 0.8;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .detection-methods {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .detection-methods h3 {
+            margin-bottom: 15px;
+            color: #ffd700;
+            font-size: 1.1rem;
+        }
+        
+        .method-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+        }
+        
+        .method-status {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .method-status.success {
+            background: rgba(40, 167, 69, 0.3);
+            border: 2px solid rgba(40, 167, 69, 0.6);
+        }
+        
+        .method-status.failed {
+            background: rgba(220, 53, 69, 0.3);
+            border: 2px solid rgba(220, 53, 69, 0.6);
+        }
+        
+        .method-status.pending {
+            background: rgba(255, 193, 7, 0.3);
+            border: 2px solid rgba(255, 193, 7, 0.6);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 300px;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- GoHighLevel UI SDK -->
+    <script src="https://unpkg.com/@gohighlevel/ui-sdk@latest/dist/index.js"></script>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🚀 WhatReach</h1>
+            <p>GoHighLevel Integration Dashboard</p>
+        </div>
+        
+        <div class="content">
+            <!-- Simple Referer Display -->
+            <div class="status-card" style="background: rgba(255, 255, 255, 0.2); border: 2px solid #ffd700;">
+                <div class="status-header">
+                    <div class="status-icon info">🔗</div>
+                    <div class="status-title">HTTP Referer URL (What Loaded This Iframe)</div>
+                </div>
+                <div class="status-details">
+                    <div style="font-family: monospace; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; word-break: break-all; font-size: 0.9rem;">
+                        <strong>Referer:</strong> <span id="referer-display">Loading...</span>
+                    </div>
+                    <div style="margin-top: 10px; font-size: 0.9rem; opacity: 0.8;">
+                        This shows the exact URL that GoHighLevel used to load your app. 
+                        Check this URL for user/location IDs or other context information.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Server-Side Referer Analysis -->
+            <div class="status-card" style="background: rgba(255, 255, 255, 0.15); border: 2px solid #00d4ff;">
+                <div class="status-header">
+                    <div class="status-icon info">🖥️</div>
+                    <div class="status-title">Server-Side Referer Analysis (Django Backend)</div>
+                </div>
+                <div class="status-details">
+                    <div style="font-family: monospace; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; font-size: 0.9rem;">
+                        <div><strong>HTTP_REFERER:</strong> <span id="server-referer">{{ referer|default:"Not found" }}</span></div>
+                        <div><strong>Origin Header:</strong> <span id="server-origin">{{ origin_header|default:"Not found" }}</span></div>
+                        <div><strong>Sec-Fetch-Dest:</strong> <span id="server-fetch-dest">{{ is_iframe_request|yesno:"iframe,not iframe" }}</span></div>
+                        <div><strong>Sec-Fetch-Site:</strong> <span id="server-fetch-site">{{ is_cross_site|yesno:"cross-site,same-site" }}</span></div>
+                        <div><strong>User Agent:</strong> <span id="server-user-agent">{{ user_agent|default:"Not found"|truncatechars:50 }}</span></div>
+                    </div>
+                    
+                    {% if server_referer_analysis %}
+                        <div style="margin-top: 15px;">
+                            <h4 style="color: #00d4ff; margin-bottom: 10px;">Referer Analysis Results:</h4>
+                            <div style="font-family: monospace; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; font-size: 0.9rem;">
+                                {% if server_referer_analysis.is_ghl %}
+                                    <div style="color: #98fb98;">✅ Referer is from GoHighLevel!</div>
+                                {% endif %}
+                                
+                                {% if server_referer_analysis.hostname %}
+                                    <div><strong>Hostname:</strong> {{ server_referer_analysis.hostname }}</div>
+                                {% endif %}
+                                
+                                {% if server_referer_analysis.path %}
+                                    <div><strong>Path:</strong> {{ server_referer_analysis.path }}</div>
+                                {% endif %}
+                                
+                                {% if server_referer_analysis.location_id %}
+                                    <div style="color: #98fb98;"><strong>📍 Location ID:</strong> {{ server_referer_analysis.location_id }}</div>
+                                {% endif %}
+                                
+                                {% if server_referer_analysis.contact_id %}
+                                    <div style="color: #98fb98;"><strong>📞 Contact ID:</strong> {{ server_referer_analysis.contact_id }}</div>
+                                {% endif %}
+                                
+                                {% if server_referer_analysis.user_id %}
+                                    <div style="color: #98fb98;"><strong>👤 User ID:</strong> {{ server_referer_analysis.user_id }}</div>
+                                {% endif %}
+                                
+                                {% if server_referer_analysis.company_id %}
+                                    <div style="color: #98fb98;"><strong>🏢 Company ID:</strong> {{ server_referer_analysis.company_id }}</div>
+                                {% endif %}
+                                
+                                {% if server_referer_analysis.iframe_request %}
+                                    <div style="color: #ffa500;"><strong>🖼️ Iframe Request:</strong> Detected</div>
+                                {% endif %}
+                                
+                                {% if server_referer_analysis.cross_site %}
+                                    <div style="color: #ffa500;"><strong>🌐 Cross-Site:</strong> Detected</div>
+                                {% endif %}
+                                
+                                {% if server_referer_analysis.origin_is_ghl %}
+                                    <div style="color: #98fb98;"><strong>🎯 Origin is GHL:</strong> Yes</div>
+                                {% endif %}
+                                
+                                {% if server_referer_analysis.query_params %}
+                                    <div><strong>Query Parameters:</strong></div>
+                                    <div style="margin-left: 20px;">
+                                        {% for key, values in server_referer_analysis.query_params.items %}
+                                            <div>{{ key }}: {{ values.0 }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <div style="margin-top: 15px; color: #ff6b6b;">
+                            No referer analysis available
+                        </div>
+                    {% endif %}
+                    
+                    <div style="margin-top: 10px; font-size: 0.9rem; opacity: 0.8;">
+                        This analysis is performed on the Django server side, which is more reliable than client-side detection.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Alternative Detection Results -->
+            <div id="alternative-detection-results" class="status-card" style="background: rgba(255, 255, 255, 0.1); border: 2px solid #ff6b6b; display: none;">
+                <div class="status-header">
+                    <div class="status-icon warning">🔍</div>
+                    <div class="status-title">Alternative Detection Results (Iframe Mode)</div>
+                </div>
+                <div class="status-details">
+                    <div id="alternative-results-display" style="font-family: monospace; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; font-size: 0.9rem;">
+                        <div><strong>Iframe Mode:</strong> <span id="iframe-status">Checking...</span></div>
+                        <div><strong>Parent Hostname:</strong> <span id="parent-hostname">Checking...</span></div>
+                        <div><strong>Window Name:</strong> <span id="window-name-status">Checking...</span></div>
+                        <div><strong>Found IDs:</strong> <span id="found-ids">Checking...</span></div>
+                    </div>
+                    <div style="margin-top: 10px; font-size: 0.9rem; opacity: 0.8;">
+                        Since referer is empty (iframe mode), these alternative methods were used to detect user context.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- GoHighLevel UI SDK Results -->
+            <div id="ghl-sdk-results" class="status-card" style="background: rgba(255, 255, 255, 0.15); border: 2px solid #00ff88; display: none;">
+                <div class="status-header">
+                    <div class="status-icon success">🚀</div>
+                    <div class="status-title">GoHighLevel UI SDK Results (Official Method)</div>
+                </div>
+                <div class="status-details">
+                    <div id="ghl-sdk-display" style="font-family: monospace; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; font-size: 0.9rem;">
+                        <div><strong>SDK Status:</strong> <span id="sdk-status">Checking...</span></div>
+                        <div><strong>Current User:</strong> <span id="current-user">Checking...</span></div>
+                        <div><strong>Current Location:</strong> <span id="current-location">Checking...</span></div>
+                        <div><strong>Current Contact:</strong> <span id="current-contact">Checking...</span></div>
+                        <div><strong>Current Funnel:</strong> <span id="current-funnel">Checking...</span></div>
+                        <div><strong>Current Page:</strong> <span id="current-page">Checking...</span></div>
+                        <div><strong>Current Campaign:</strong> <span id="current-campaign">Checking...</span></div>
+                    </div>
+                    <div style="margin-top: 10px; font-size: 0.9rem; opacity: 0.8;">
+                        This data comes directly from GoHighLevel's official UI SDK - the most reliable method to get user context.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Loading state while detecting user -->
+            <div id="loading-section" class="status-card">
+                <div class="status-header">
+                    <div class="status-icon info">⏳</div>
+                    <div class="status-title">Detecting User Context</div>
+                </div>
+                <div class="status-details">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Detecting GoHighLevel context...
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main content (hidden until user detected) -->
+            <div id="main-content" style="display: none;">
+                <div id="integration-status"></div>
+                <div id="integration-details"></div>
+                <div id="action-buttons"></div>
+            </div>
+            
+            <!-- Detection Methods Status -->
+            <div class="detection-methods">
+                <h3>🔍 Detection Methods Status</h3>
+                <div id="methods-status">
+                    <div class="method-item">
+                        <div class="method-status pending" id="method-1">⏳</div>
+                        <span>GoHighLevel UI SDK (Official)</span>
+                    </div>
+                    <div class="method-item">
+                        <div class="method-status pending" id="method-2">⏳</div>
+                        <span>URL Parameters</span>
+                    </div>
+                    <div class="method-item">
+                        <div class="method-status pending" id="method-3">⏳</div>
+                        <span>Referer Analysis</span>
+                    </div>
+                    <div class="method-item">
+                        <div class="method-status pending" id="method-4">⏳</div>
+                        <span>Iframe Detection</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- User Context Debug Section -->
+            <div class="debug-section">
+                <div class="debug-title">🔍 GoHighLevel User Context</div>
+                <div id="debug-info" class="debug-grid">
+                    <div class="debug-item">
+                        <div class="debug-label">Location ID</div>
+                        <div class="debug-value" id="debug-location-id">Detecting...</div>
+                    </div>
+                    <div class="debug-item">
+                        <div class="debug-label">User ID</div>
+                        <div class="debug-value" id="debug-user-id">Detecting...</div>
+                    </div>
+                    <div class="debug-item">
+                        <div class="debug-label">Company ID</div>
+                        <div class="debug-value" id="debug-company-id">Detecting...</div>
+                    </div>
+                    <div class="debug-item">
+                        <div class="debug-label">Contact ID</div>
+                        <div class="debug-value" id="debug-contact-id">Detecting...</div>
+                    </div>
+                    <div class="debug-item">
+                        <div class="debug-label">Funnel ID</div>
+                        <div class="debug-value" id="debug-funnel-id">Detecting...</div>
+                    </div>
+                    <div class="debug-item">
+                        <div class="debug-label">Page ID</div>
+                        <div class="debug-value" id="debug-page-id">Detecting...</div>
+                    </div>
+                    <div class="debug-item">
+                        <div class="debug-label">Campaign ID</div>
+                        <div class="debug-value" id="debug-campaign-id">Detecting...</div>
+                    </div>
+                    <div class="debug-item">
+                        <div class="debug-label">Iframe Mode</div>
+                        <div class="debug-value" id="debug-iframe-mode">Detecting...</div>
+                    </div>
+                </div>
+                
+                <!-- Enhanced Context Information -->
+                <div class="debug-title" style="margin-top: 20px;">🔍 Enhanced Context Detection</div>
+                <div id="enhanced-debug-info" class="debug-grid">
+                    <div class="debug-item">
+                        <div class="debug-label">Referer Domain</div>
+                        <div class="debug-value" id="debug-referer-domain">Detecting...</div>
+                    </div>
+                    <div class="debug-item">
+                        <div class="debug-label">Parent Hostname</div>
+                        <div class="debug-value" id="debug-parent-hostname">Detecting...</div>
+                    </div>
+                    <div class="debug-item">
+                        <div class="debug-label">Extracted Location</div>
+                        <div class="debug-value" id="debug-extracted-location">Detecting...</div>
+                    </div>
+                    <div class="debug-item">
+                        <div class="debug-label">Extracted User</div>
+                        <div class="debug-value" id="debug-extracted-user">Detecting...</div>
+                    </div>
+                    <div class="debug-item">
+                        <div class="debug-label">Window Name</div>
+                        <div class="debug-value" id="debug-window-name">Detecting...</div>
+                    </div>
+                    <div class="debug-item">
+                        <div class="debug-label">Session Storage</div>
+                        <div class="debug-value" id="debug-session-storage">Detecting...</div>
+                    </div>
+                    <div class="debug-item">
+                        <div class="debug-label">Local Storage</div>
+                        <div class="debug-value" id="debug-local-storage">Detecting...</div>
+                    </div>
+                    <div class="debug-item">
+                        <div class="debug-label">API Available</div>
+                        <div class="debug-value" id="debug-api-available">Detecting...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>WhatReach - GoHighLevel Integration App</p>
+            <p>Version 1.0.0 | Built with Django</p>
+        </div>
+    </div>
+    
+    <script>
+        // GoHighLevel User Context Detection with Official UI SDK
+        class GoHighLevelContext {
+            constructor() {
+                this.context = {};
+                this.detectionResults = {};
+                this.ghlSDK = null;
+                this.init();
+            }
+            
+            async init() {
+                console.log('🚀 WhatReach: Initializing GoHighLevel UI SDK integration...');
+                
+                // Start detection with a timeout
+                setTimeout(() => {
+                    this.finishDetection();
+                }, 5000); // 5 second timeout for SDK to load
+                
+                // Method 1: Try GoHighLevel UI SDK (Official Method)
+                await this.detectGoHighLevelSDK();
+                
+                // Method 2: Check URL parameters (fallback)
+                this.detectURLParameters();
+                
+                // Method 3: Analyze referer (fallback)
+                this.detectRefererInfo();
+                
+                // Method 4: Detect iframe (fallback)
+                this.detectIframe();
+                
+                // Update UI with detected context
+                this.updateUI();
+                
+                // Send context to Django backend
+                this.sendContextToBackend();
+            }
+            
+            async detectGoHighLevelSDK() {
+                console.log('🔍 Method 1: Checking GoHighLevel UI SDK...');
+                
+                try {
+                    // Check if GoHighLevel UI SDK is available
+                    if (typeof window.GoHighLevel !== 'undefined') {
+                        console.log('✅ GoHighLevel global object detected!');
+                        this.context.ghlGlobal = true;
+                        
+                        // Wait for SDK to be ready
+                        if (window.GoHighLevel.isReady) {
+                            await this.waitForSDKReady();
+                        }
+                        
+                        // Try to get current user context using correct SDK methods
+                        if (window.GoHighLevel.getCurrentUser) {
+                            try {
+                                const user = await window.GoHighLevel.getCurrentUser();
+                                console.log('👤 Current user from GHL SDK:', user);
+                                this.context.user = user;
+                                this.detectionResults.ghlUser = true;
+                                this.updateMethodStatus(1, 'success');
+                            } catch (e) {
+                                console.log('⚠️ Could not get current user:', e);
+                                // Try alternative method names
+                                await this.tryAlternativeSDKMethods();
+                            }
+                        } else {
+                            console.log('⚠️ getCurrentUser method not available, trying alternatives...');
+                            await this.tryAlternativeSDKMethods();
+                        }
+                        
+                        // Try to get current location context
+                        if (window.GoHighLevel.getCurrentLocation) {
+                            try {
+                                const location = await window.GoHighLevel.getCurrentLocation();
+                                console.log('📍 Current location from GHL SDK:', location);
+                                this.context.location = location;
+                                this.detectionResults.ghlLocation = true;
+                            } catch (e) {
+                                console.log('⚠️ Could not get current location:', e);
+                            }
+                        }
+                        
+                        // Try to get current contact context
+                        if (window.GoHighLevel.getCurrentContact) {
+                            try {
+                                const contact = await window.GoHighLevel.getCurrentContact();
+                                console.log('📞 Current contact from GHL SDK:', contact);
+                                this.context.contact = contact;
+                                this.detectionResults.ghlContact = true;
+                            } catch (e) {
+                                console.log('⚠️ Could not get current contact:', e);
+                            }
+                        }
+                        
+                        // Try to get current funnel context
+                        if (window.GoHighLevel.getCurrentFunnel) {
+                            try {
+                                const funnel = await window.GoHighLevel.getCurrentFunnel();
+                                console.log('🔄 Current funnel from GHL SDK:', funnel);
+                                this.context.funnel = funnel;
+                                this.detectionResults.ghlFunnel = true;
+                            } catch (e) {
+                                console.log('⚠️ Could not get current funnel:', e);
+                            }
+                        }
+                        
+                        // Try to get current page context
+                        if (window.GoHighLevel.getCurrentPage) {
+                            try {
+                                const page = await window.GoHighLevel.getCurrentPage();
+                                console.log('📄 Current page from GHL SDK:', page);
+                                this.context.page = page;
+                                this.detectionResults.ghlPage = true;
+                            } catch (e) {
+                                console.log('⚠️ Could not get current page:', e);
+                            }
+                        }
+                        
+                        // Try to get current campaign context
+                        if (window.GoHighLevel.getCurrentCampaign) {
+                            try {
+                                const campaign = await window.GoHighLevel.getCurrentCampaign();
+                                console.log('📢 Current campaign from GHL SDK:', campaign);
+                                this.context.campaign = campaign;
+                                this.detectionResults.ghlCampaign = true;
+                            } catch (e) {
+                                console.log('⚠️ Could not get current campaign:', e);
+                            }
+                        }
+                        
+                        // Listen for context changes
+                        this.setupGHLContextListeners();
+                        
+                    } else {
+                        console.log('❌ GoHighLevel global object not available');
+                        this.detectionResults.ghlGlobal = false;
+                        this.updateMethodStatus(1, 'failed');
+                        
+                        // Try to load the UI SDK dynamically
+                        await this.loadGoHighLevelSDK();
+                    }
+                } catch (e) {
+                    console.log('❌ Error detecting GoHighLevel SDK:', e);
+                    this.detectionResults.ghlGlobal = false;
+                    this.updateMethodStatus(1, 'failed');
+                }
+            }
+            
+            async waitForSDKReady() {
+                console.log('⏳ Waiting for GoHighLevel SDK to be ready...');
+                
+                return new Promise((resolve) => {
+                    if (window.GoHighLevel.isReady()) {
+                        console.log('✅ GoHighLevel SDK is ready!');
+                        resolve();
+                    } else {
+                        // Wait for SDK to be ready
+                        const checkReady = () => {
+                            if (window.GoHighLevel.isReady()) {
+                                console.log('✅ GoHighLevel SDK is now ready!');
+                                resolve();
+                            } else {
+                                setTimeout(checkReady, 100);
+                            }
+                        };
+                        checkReady();
+                    }
+                });
+            }
+            
+            async tryAlternativeSDKMethods() {
+                console.log('🔄 Trying alternative SDK methods...');
+                
+                // Try different method names that might exist
+                const alternativeMethods = {
+                    'getUser': 'user',
+                    'getLocation': 'location', 
+                    'getContact': 'contact',
+                    'getFunnel': 'funnel',
+                    'getPage': 'page',
+                    'getCampaign': 'campaign',
+                    'getCurrentUserInfo': 'user',
+                    'getCurrentLocationInfo': 'location',
+                    'getCurrentContactInfo': 'contact',
+                    'getUserInfo': 'user',
+                    'getLocationInfo': 'location',
+                    'getContactInfo': 'contact'
+                };
+                
+                for (const [methodName, contextKey] of Object.entries(alternativeMethods)) {
+                    if (window.GoHighLevel[methodName] && typeof window.GoHighLevel[methodName] === 'function') {
+                        try {
+                            console.log(`🔍 Trying alternative method: ${methodName}`);
+                            const result = await window.GoHighLevel[methodName]();
+                            console.log(`✅ ${methodName} succeeded:`, result);
+                            this.context[contextKey] = result;
+                            this.detectionResults[`ghl${contextKey.charAt(0).toUpperCase() + contextKey.slice(1)}`] = true;
+                        } catch (e) {
+                            console.log(`⚠️ ${methodName} failed:`, e);
+                        }
+                    }
+                }
+                
+                // Try to get context from SDK properties
+                if (window.GoHighLevel.context) {
+                    console.log('🔍 Found GHL context property:', window.GoHighLevel.context);
+                    this.context.ghlContextProperty = window.GoHighLevel.context;
+                }
+                
+                if (window.GoHighLevel.user) {
+                    console.log('🔍 Found GHL user property:', window.GoHighLevel.user);
+                    this.context.user = window.GoHighLevel.user;
+                    this.detectionResults.ghlUser = true;
+                }
+                
+                if (window.GoHighLevel.location) {
+                    console.log('🔍 Found GHL location property:', window.GoHighLevel.location);
+                    this.context.location = window.GoHighLevel.location;
+                    this.detectionResults.ghlLocation = true;
+                }
+                
+                if (window.GoHighLevel.contact) {
+                    console.log('🔍 Found GHL contact property:', window.GoHighLevel.contact);
+                    this.context.contact = window.GoHighLevel.contact;
+                    this.detectionResults.ghlContact = true;
+                }
+            }
+            
+            async loadGoHighLevelSDK() {
+                console.log('📥 Loading GoHighLevel UI SDK...');
+                
+                try {
+                    // Try multiple SDK sources
+                    const sdkSources = [
+                        'https://unpkg.com/@gohighlevel/ui-sdk@latest/dist/index.js',
+                        'https://cdn.jsdelivr.net/npm/@gohighlevel/ui-sdk@latest/dist/index.js',
+                        'https://unpkg.com/@gohighlevel/ui-sdk@latest/dist/index.umd.js',
+                        'https://cdn.jsdelivr.net/npm/@gohighlevel/ui-sdk@latest/dist/index.umd.js'
+                    ];
+                    
+                    for (const sdkUrl of sdkSources) {
+                        try {
+                            console.log(`🔍 Trying SDK source: ${sdkUrl}`);
+                            
+                            // Create script element
+                            const script = document.createElement('script');
+                            script.src = sdkUrl;
+                            script.type = 'text/javascript';
+                            script.async = true;
+                            
+                            // Wait for script to load
+                            await new Promise((resolve, reject) => {
+                                script.onload = resolve;
+                                script.onerror = reject;
+                                document.head.appendChild(script);
+                            });
+                            
+                            console.log(`✅ SDK loaded successfully from: ${sdkUrl}`);
+                            
+                            // Wait a bit for SDK to initialize
+                            await new Promise(resolve => setTimeout(resolve, 1000));
+                            
+                            // Check if SDK is now available
+                            if (typeof window.GoHighLevel !== 'undefined') {
+                                console.log('✅ GoHighLevel SDK is now available!');
+                                this.detectionResults.ghlGlobal = true;
+                                this.updateMethodStatus(1, 'success');
+                                
+                                // Retry detection
+                                await this.retrySDKDetection();
+                                return;
+                            }
+                            
+                        } catch (e) {
+                            console.log(`❌ Failed to load SDK from ${sdkUrl}:`, e);
+                        }
+                    }
+                    
+                    // If all sources failed, try to detect existing SDK
+                    console.log('⚠️ All SDK sources failed, checking for existing SDK...');
+                    await this.detectExistingSDK();
+                    
+                } catch (e) {
+                    console.log('❌ Error loading GoHighLevel SDK:', e);
+                }
+            }
+            
+            async detectExistingSDK() {
+                console.log('🔍 Checking for existing GoHighLevel SDK...');
+                
+                // Check for various possible SDK objects
+                const possibleSDKs = [
+                    'GoHighLevel',
+                    'GHL',
+                    'ghl',
+                    'goHighLevel',
+                    'go_high_level',
+                    'window.GoHighLevel',
+                    'window.GHL'
+                ];
+                
+                for (const sdkName of possibleSDKs) {
+                    try {
+                        const sdk = eval(sdkName);
+                        if (sdk && typeof sdk === 'object') {
+                            console.log(`✅ Found existing SDK: ${sdkName}`, sdk);
+                            this.context.existingSDK = { name: sdkName, object: sdk };
+                            
+                            // Try to extract data from existing SDK
+                            await this.extractDataFromExistingSDK(sdk);
+                            return;
+                        }
+                    } catch (e) {
+                        // Ignore errors for eval
+                    }
+                }
+                
+                console.log('❌ No existing SDK found');
+            }
+            
+            async extractDataFromExistingSDK(sdk) {
+                console.log('🔍 Extracting data from existing SDK...');
+                
+                // Check for common properties
+                const propertiesToCheck = [
+                    'user', 'location', 'contact', 'funnel', 'page', 'campaign',
+                    'currentUser', 'currentLocation', 'currentContact', 'currentFunnel',
+                    'context', 'state', 'data', 'info'
+                ];
+                
+                for (const prop of propertiesToCheck) {
+                    if (sdk[prop]) {
+                        console.log(`✅ Found SDK property: ${prop}`, sdk[prop]);
+                        this.context[`sdk_${prop}`] = sdk[prop];
+                        
+                        // Map to our context structure
+                        if (prop === 'user' || prop === 'currentUser') {
+                            this.context.user = sdk[prop];
+                            this.detectionResults.ghlUser = true;
+                        } else if (prop === 'location' || prop === 'currentLocation') {
+                            this.context.location = sdk[prop];
+                            this.detectionResults.ghlLocation = true;
+                        } else if (prop === 'contact' || prop === 'currentContact') {
+                            this.context.contact = sdk[prop];
+                            this.detectionResults.ghlContact = true;
+                        }
+                    }
+                }
+                
+                // Check for methods
+                const methodsToCheck = [
+                    'getUser', 'getLocation', 'getContact', 'getFunnel', 'getPage', 'getCampaign',
+                    'getCurrentUser', 'getCurrentLocation', 'getCurrentContact', 'getCurrentFunnel',
+                    'getUserInfo', 'getLocationInfo', 'getContactInfo'
+                ];
+                
+                for (const method of methodsToCheck) {
+                    if (sdk[method] && typeof sdk[method] === 'function') {
+                        try {
+                            console.log(`🔍 Trying SDK method: ${method}`);
+                            const result = await sdk[method]();
+                            console.log(`✅ ${method} succeeded:`, result);
+                            
+                            // Map result to context
+                            if (method.includes('User')) {
+                                this.context.user = result;
+                                this.detectionResults.ghlUser = true;
+                            } else if (method.includes('Location')) {
+                                this.context.location = result;
+                                this.detectionResults.ghlLocation = true;
+                            } else if (method.includes('Contact')) {
+                                this.context.contact = result;
+                                this.detectionResults.ghlContact = true;
+                            }
+                        } catch (e) {
+                            console.log(`⚠️ ${method} failed:`, e);
+                        }
+                    }
+                }
+            }
+            
+            async retrySDKDetection() {
+                console.log('🔄 Retrying SDK detection after loading...');
+                
+                // Wait a bit for SDK to initialize
+                setTimeout(async () => {
+                    await this.detectGoHighLevelSDK();
+                }, 1000);
+            }
+            
+            setupGHLContextListeners() {
+                console.log('🔧 Setting up GoHighLevel context listeners...');
+                
+                // Listen for user changes
+                if (window.GoHighLevel.onUserChange) {
+                    window.GoHighLevel.onUserChange((user) => {
+                        console.log('👤 User changed via GHL SDK:', user);
+                        this.context.userChange = user;
+                        this.updateUI();
+                    });
+                }
+                
+                // Listen for location changes
+                if (window.GoHighLevel.onLocationChange) {
+                    window.GoHighLevel.onLocationChange((location) => {
+                        console.log('📍 Location changed via GHL SDK:', location);
+                        this.context.locationChange = location;
+                        this.updateUI();
+                    });
+                }
+                
+                // Listen for contact changes
+                if (window.GoHighLevel.onContactChange) {
+                    window.GoHighLevel.onContactChange((contact) => {
+                        console.log('📞 Contact changed via GHL SDK:', contact);
+                        this.context.contactChange = contact;
+                        this.updateUI();
+                    });
+                }
+                
+                // Listen for funnel changes
+                if (window.GoHighLevel.onFunnelChange) {
+                    window.GoHighLevel.onFunnelChange((funnel) => {
+                        console.log('🔄 Funnel changed via GHL SDK:', funnel);
+                        this.context.funnelChange = funnel;
+                        this.updateUI();
+                    });
+                }
+                
+                // Listen for page changes
+                if (window.GoHighLevel.onPageChange) {
+                    window.GoHighLevel.onPageChange((page) => {
+                        console.log('📄 Page changed via GHL SDK:', page);
+                        this.context.pageChange = page;
+                        this.updateUI();
+                    });
+                }
+                
+                // Listen for campaign changes
+                if (window.GoHighLevel.onCampaignChange) {
+                    window.GoHighLevel.onCampaignChange((campaign) => {
+                        console.log('📢 Campaign changed via GHL SDK:', campaign);
+                        this.context.campaignChange = campaign;
+                        this.updateUI();
+                    });
+                }
+            }
+            
+            detectURLParameters() {
+                console.log('🔍 Method 2: Checking URL parameters...');
+                
+                const urlParams = new URLSearchParams(window.location.search);
+                const params = {};
+                
+                // Common GoHighLevel parameters
+                ['locationId', 'userId', 'companyId', 'contactId', 'funnelId', 'pageId', 'campaignId'].forEach(param => {
+                    const value = urlParams.get(param);
+                    if (value) {
+                        params[param] = value;
+                        console.log(`✅ Found URL param ${param}:`, value);
+                    }
+                });
+                
+                // Also check for parameters in the URL path
+                const pathParts = window.location.pathname.split('/');
+                console.log('🔍 URL path parts:', pathParts);
+                
+                // Look for ID patterns in path (common GHL patterns)
+                for (let i = 0; i < pathParts.length; i++) {
+                    const part = pathParts[i];
+                    if (part && part.length > 10) { // Likely an ID
+                        // Check if it looks like a GHL ID (alphanumeric, 20+ chars)
+                        if (/^[a-zA-Z0-9]{20,}$/.test(part)) {
+                            console.log(`🔍 Potential GHL ID in path: ${part} at position ${i}`);
+                            
+                            // Try to determine what type of ID this might be
+                            if (i > 0) {
+                                const previousPart = pathParts[i - 1].toLowerCase();
+                                if (previousPart.includes('location') || previousPart.includes('business')) {
+                                    params.locationId = part;
+                                    console.log(`✅ Identified as location ID: ${part}`);
+                                } else if (previousPart.includes('contact') || previousPart.includes('lead')) {
+                                    params.contactId = part;
+                                    console.log(`✅ Identified as contact ID: ${part}`);
+                                } else if (previousPart.includes('user') || previousPart.includes('member')) {
+                                    params.userId = part;
+                                    console.log(`✅ Identified as user ID: ${part}`);
+                                } else if (previousPart.includes('company') || previousPart.includes('org')) {
+                                    params.companyId = part;
+                                    console.log(`✅ Identified as company ID: ${part}`);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                if (Object.keys(params).length > 0) {
+                    this.context.urlParams = params;
+                    console.log('✅ URL parameters extracted:', params);
+                } else {
+                    console.log('❌ No URL parameters found');
+                }
+            }
+            
+            detectRefererInfo() {
+                console.log('🔍 Method 3: Analyzing referer information...');
+                
+                const referer = document.referrer;
+                if (referer) {
+                    console.log('📄 Referer URL:', referer);
+                    
+                    try {
+                        const refererUrl = new URL(referer);
+                        console.log('🔍 Referer analysis:');
+                        console.log('   - Hostname:', refererUrl.hostname);
+                        console.log('   - Path:', refererUrl.pathname);
+                        console.log('   - Search params:', refererUrl.search);
+                        
+                        // Check if referer is from GoHighLevel
+                        if (refererUrl.hostname.includes('gohighlevel.com') || 
+                            refererUrl.hostname.includes('leadconnectorhq.com')) {
+                            console.log('✅ Referer is from GoHighLevel!');
+                            this.context.isFromGHL = true;
+                            
+                            // Extract IDs from referer URL
+                            const refererParams = new URLSearchParams(refererUrl.search);
+                            const refererIds = {};
+                            
+                            ['locationId', 'userId', 'companyId', 'contactId', 'funnelId', 'pageId', 'campaignId'].forEach(param => {
+                                const value = refererParams.get(param);
+                                if (value) {
+                                    refererIds[param] = value;
+                                    console.log(`✅ Found referer param ${param}:`, value);
+                                }
+                            });
+                            
+                            // Also check path for IDs
+                            const refererPathParts = refererUrl.pathname.split('/');
+                            for (let i = 0; i < refererPathParts.length; i++) {
+                                const part = refererPathParts[i];
+                                if (part && /^[a-zA-Z0-9]{20,}$/.test(part)) {
+                                    if (i > 0) {
+                                        const previousPart = refererPathParts[i - 1].toLowerCase();
+                                        if (previousPart.includes('location')) {
+                                            refererIds.locationId = part;
+                                        } else if (previousPart.includes('contact')) {
+                                            refererIds.contactId = part;
+                                        } else if (previousPart.includes('user')) {
+                                            refererIds.userId = part;
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            if (Object.keys(refererIds).length > 0) {
+                                this.context.refererIds = refererIds;
+                                console.log('✅ Referer IDs extracted:', refererIds);
+                            }
+                            
+                        } else {
+                            console.log('❌ Referer is not from GoHighLevel');
+                        }
+                        
+                        this.context.referer = referer;
+                        
+                    } catch (e) {
+                        console.log('⚠️ Error parsing referer URL:', e);
+                        this.context.referer = referer;
+                    }
+                } else {
+                    console.log('❌ No referer found');
+                }
+            }
+            
+            detectIframe() {
+                console.log('🔍 Method 4: Detecting iframe...');
+                
+                // Check if we're in an iframe
+                const isInIframe = window.self !== window.top;
+                this.context.isInIframe = isInIframe;
+                
+                if (isInIframe) {
+                    console.log('✅ Detected iframe mode');
+                    this.detectionResults.iframe = true;
+                    this.updateMethodStatus(4, 'success');
+                    
+                    // Try to get parent window info
+                    try {
+                        this.context.parentOrigin = window.parent.location.origin;
+                        this.context.parentHostname = window.parent.location.hostname;
+                        console.log('📍 Parent origin:', this.context.parentOrigin);
+                        
+                        // Check if parent is GoHighLevel
+                        if (this.context.parentHostname.includes('gohighlevel.com') || this.context.parentHostname.includes('leadconnectorhq.com')) {
+                            console.log('✅ Parent window is GoHighLevel');
+                            this.context.parentIsGHL = true;
+                        }
+                        
+                    } catch (e) {
+                        console.log('⚠️ Cannot access parent window (cross-origin)');
+                        // This is normal for cross-origin iframes
+                    }
+                    
+                    // Listen for messages from parent
+                    this.setupParentMessageListener();
+                    
+                    // Try to extract context from parent window URL
+                    this.extractContextFromParent();
+                    
+                } else {
+                    console.log('❌ Not in iframe');
+                    this.detectionResults.iframe = false;
+                    this.updateMethodStatus(4, 'failed');
+                }
+            }
+            
+            extractContextFromParent() {
+                console.log('🔍 Trying to extract context from parent window...');
+                
+                // Try to get parent window URL (if same origin)
+                try {
+                    const parentUrl = window.parent.location.href;
+                    console.log('📍 Parent URL:', parentUrl);
+                    
+                    // Parse parent URL for context
+                    const parentUrlObj = new URL(parentUrl);
+                    this.extractGHLContextFromReferer(parentUrlObj);
+                    
+                } catch (e) {
+                    console.log('⚠️ Cannot access parent URL (cross-origin)');
+                    
+                    // Try alternative methods for cross-origin
+                    this.tryCrossOriginContextExtraction();
+                }
+            }
+            
+            tryCrossOriginContextExtraction() {
+                console.log('🔍 Trying cross-origin context extraction...');
+                
+                // Method 1: Try to get context from window.name (sometimes used by GHL)
+                if (window.name && window.name.length > 0) {
+                    console.log('📍 Window name:', window.name);
+                    this.context.windowName = window.name;
+                    
+                    // Try to parse JSON from window.name
+                    try {
+                        const nameData = JSON.parse(window.name);
+                        if (nameData && typeof nameData === 'object') {
+                            console.log('✅ Parsed window.name data:', nameData);
+                            this.context.windowNameData = nameData;
+                            
+                            // Extract user context from window.name
+                            if (nameData.locationId || nameData.userId || nameData.companyId) {
+                                this.context.extractedFromWindowName = {
+                                    locationId: nameData.locationId,
+                                    userId: nameData.userId,
+                                    companyId: nameData.companyId,
+                                    contactId: nameData.contactId
+                                };
+                                console.log('✅ Extracted context from window.name:', this.context.extractedFromWindowName);
+                            }
+                        }
+                    } catch (e) {
+                        console.log('⚠️ Window name is not JSON:', e);
+                    }
+                }
+                
+                // Method 2: Try to get context from sessionStorage (if accessible)
+                try {
+                    const sessionData = sessionStorage.getItem('ghl_context') || sessionStorage.getItem('gohighlevel_context');
+                    if (sessionData) {
+                        console.log('📍 Found GHL context in sessionStorage');
+                        this.context.sessionStorageData = sessionData;
+                        
+                        try {
+                            const parsedData = JSON.parse(sessionData);
+                            if (parsedData && typeof parsedData === 'object') {
+                                this.context.parsedSessionData = parsedData;
+                                console.log('✅ Parsed sessionStorage data:', parsedData);
+                            }
+                        } catch (e) {
+                            console.log('⚠️ SessionStorage data is not JSON:', e);
+                        }
+                    }
+                } catch (e) {
+                    console.log('⚠️ Cannot access sessionStorage:', e);
+                }
+                
+                // Method 3: Try to get context from localStorage (if accessible)
+                try {
+                    const localData = localStorage.getItem('ghl_context') || localStorage.getItem('gohighlevel_context');
+                    if (localData) {
+                        console.log('📍 Found GHL context in localStorage');
+                        this.context.localStorageData = localData;
+                        
+                        try {
+                            const parsedData = JSON.parse(localData);
+                            if (parsedData && typeof parsedData === 'object') {
+                                this.context.parsedLocalData = parsedData;
+                                console.log('✅ Parsed localStorage data:', parsedData);
+                            }
+                        } catch (e) {
+                            console.log('⚠️ LocalStorage data is not JSON:', e);
+                        }
+                    }
+                } catch (e) {
+                    console.log('⚠️ Cannot access localStorage:', e);
+                }
+            }
+            
+            setupParentMessageListener() {
+                // Listen for messages from parent (GoHighLevel)
+                window.addEventListener('message', (event) => {
+                    console.log('📨 Message received from parent:', event.data);
+                    
+                    if (event.data && event.data.type) {
+                        this.context.parentMessage = event.data;
+                        
+                        // Handle specific message types
+                        switch (event.data.type) {
+                            case 'ghl-user-context':
+                                console.log('✅ Received GoHighLevel user context:', event.data);
+                                this.context.ghlContext = event.data;
+                                break;
+                            case 'ghl-location-change':
+                                console.log('✅ Location changed:', event.data);
+                                this.context.locationChange = event.data;
+                                break;
+                            case 'ghl-contact-change':
+                                console.log('✅ Contact changed:', event.data);
+                                this.context.contactChange = event.data;
+                                break;
+                            case 'ghl-init':
+                                console.log('✅ GoHighLevel initialization message:', event.data);
+                                this.context.ghlInit = event.data;
+                                break;
+                        }
+                        
+                        this.updateUI();
+                    }
+                });
+                
+                // Request context from parent
+                if (window.parent && window.parent !== window) {
+                    console.log('📤 Requesting context from parent...');
+                    
+                    // Send multiple types of requests
+                    const requests = [
+                        { type: 'whatreach-request-context', message: 'Please provide user context' },
+                        { type: 'ghl-get-context', message: 'Get current context' },
+                        { type: 'ghl-get-user', message: 'Get current user' },
+                        { type: 'ghl-get-location', message: 'Get current location' }
+                    ];
+                    
+                    requests.forEach(request => {
+                        window.parent.postMessage(request, '*');
+                        console.log('📤 Sent request:', request.type);
+                    });
+                }
+            }
+            
+            updateMethodStatus(methodNumber, status) {
+                const methodElement = document.getElementById(`method-${methodNumber}`);
+                if (methodElement) {
+                    methodElement.className = `method-status ${status}`;
+                    methodElement.textContent = status === 'success' ? '✅' : status === 'failed' ? '❌' : '⏳';
+                }
+                
+                // Update detection results
+                const methodNames = [
+                    'ghlSDK',
+                    'urlParams', 
+                    'referer',
+                    'iframe'
+                ];
+                
+                if (methodNumber <= methodNames.length) {
+                    const methodName = methodNames[methodNumber - 1];
+                    this.detectionResults[methodName] = status === 'success';
+                }
+            }
+            
+            finishDetection() {
+                console.log('⏰ Detection timeout reached, finalizing results...');
+                
+                // Update method statuses based on detection results
+                if (this.detectionResults.ghlSDK) {
+                    this.updateMethodStatus(1, 'success');
+                } else {
+                    this.updateMethodStatus(1, 'failed');
+                }
+                
+                if (this.context.urlParams && Object.keys(this.context.urlParams).length > 0) {
+                    this.updateMethodStatus(2, 'success');
+                } else {
+                    this.updateMethodStatus(2, 'failed');
+                }
+                
+                if (this.context.referer && this.context.isFromGHL) {
+                    this.updateMethodStatus(3, 'success');
+                } else {
+                    this.updateMethodStatus(3, 'failed');
+                }
+                
+                if (this.context.isInIframe) {
+                    this.updateMethodStatus(4, 'success');
+                } else {
+                    this.updateMethodStatus(4, 'failed');
+                }
+                
+                // Update debug info
+                this.updateDebugInfo();
+                
+                // Show GoHighLevel SDK results if available
+                this.updateSDKResults();
+                
+                // Show main content if we have any context
+                if (this.hasAnyContext()) {
+                    this.showMainContent();
+                } else {
+                    this.showNoContextMessage();
+                }
+            }
+            
+            updateUI() {
+                console.log('🎨 Updating UI with context:', this.context);
+                
+                // Update debug info
+                this.updateDebugInfo();
+                
+                // Show GoHighLevel SDK results if available
+                this.updateSDKResults();
+                
+                // Show main content if we have any context
+                if (this.hasAnyContext()) {
+                    this.showMainContent();
+                } else {
+                    this.showNoContextMessage();
+                }
+            }
+            
+            updateSDKResults() {
+                // Show the SDK results section if we have any SDK data
+                const sdkSection = document.getElementById('ghl-sdk-results');
+                if (sdkSection && (this.context.user || this.context.location || this.context.contact)) {
+                    sdkSection.style.display = 'block';
+                    
+                    // Update SDK status
+                    const sdkStatus = document.getElementById('sdk-status');
+                    if (sdkStatus) {
+                        sdkStatus.textContent = '✅ SDK Active';
+                        sdkStatus.style.color = '#98fb98';
+                    }
+                    
+                    // Update current user
+                    const currentUser = document.getElementById('current-user');
+                    if (currentUser) {
+                        if (this.context.user) {
+                            const userInfo = this.context.user.id || this.context.user.email || this.context.user.name || 'Available';
+                            currentUser.textContent = userInfo;
+                            currentUser.style.color = '#98fb98';
+                        } else {
+                            currentUser.textContent = 'Not available';
+                            currentUser.style.color = '#ff6b6b';
+                        }
+                    }
+                    
+                    // Update current location
+                    const currentLocation = document.getElementById('current-location');
+                    if (currentLocation) {
+                        if (this.context.location) {
+                            const locationInfo = this.context.location.id || this.context.location.name || 'Available';
+                            currentLocation.textContent = locationInfo;
+                            currentLocation.style.color = '#98fb98';
+                        } else {
+                            currentLocation.textContent = 'Not available';
+                            currentLocation.style.color = '#ff6b6b';
+                        }
+                    }
+                    
+                    // Update current contact
+                    const currentContact = document.getElementById('current-contact');
+                    if (currentContact) {
+                        if (this.context.contact) {
+                            const contactInfo = this.context.contact.id || this.context.contact.email || this.context.contact.name || 'Available';
+                            currentContact.textContent = contactInfo;
+                            currentContact.style.color = '#98fb98';
+                        } else {
+                            currentContact.textContent = 'Not available';
+                            currentContact.style.color = '#ff6b6b';
+                        }
+                    }
+                    
+                    // Update current funnel
+                    const currentFunnel = document.getElementById('current-funnel');
+                    if (currentFunnel) {
+                        if (this.context.funnel) {
+                            const funnelInfo = this.context.funnel.id || this.context.funnel.name || 'Available';
+                            currentFunnel.textContent = funnelInfo;
+                            currentFunnel.style.color = '#98fb98';
+                        } else {
+                            currentFunnel.textContent = 'Not available';
+                            currentFunnel.style.color = '#ff6b6b';
+                        }
+                    }
+                    
+                    // Update current page
+                    const currentPage = document.getElementById('current-page');
+                    if (currentPage) {
+                        if (this.context.page) {
+                            const pageInfo = this.context.page.id || this.context.page.name || 'Available';
+                            currentPage.textContent = pageInfo;
+                            currentPage.style.color = '#98fb98';
+                        } else {
+                            currentPage.textContent = 'Not available';
+                            currentPage.style.color = '#ff6b6b';
+                        }
+                    }
+                    
+                    // Update current campaign
+                    const currentCampaign = document.getElementById('current-campaign');
+                    if (currentCampaign) {
+                        if (this.context.campaign) {
+                            const campaignInfo = this.context.campaign.id || this.context.campaign.name || 'Available';
+                            currentCampaign.textContent = campaignInfo;
+                            currentCampaign.style.color = '#98fb98';
+                        } else {
+                            currentCampaign.textContent = 'Not available';
+                            currentCampaign.style.color = '#ff6b6b';
+                        }
+                    }
+                }
+            }
+            
+            updateDebugInfo() {
+                // Update debug values
+                const debugElements = {
+                    'debug-location-id': this.getContextValue(['location', 'id', 'urlParams', 'locationId', 'extractedLocationId', 'ghlRefererContext', 'locationId']),
+                    'debug-user-id': this.getContextValue(['user', 'id', 'urlParams', 'userId', 'extractedUserId', 'ghlRefererContext', 'userId']),
+                    'debug-company-id': this.getContextValue(['location', 'companyId', 'urlParams', 'companyId', 'ghlRefererContext', 'companyId']),
+                    'debug-contact-id': this.getContextValue(['contact', 'id', 'urlParams', 'contactId', 'extractedContactId', 'ghlRefererContext', 'contactId']),
+                    'debug-funnel-id': this.getContextValue(['urlParams', 'funnelId']),
+                    'debug-page-id': this.getContextValue(['urlParams', 'pageId']),
+                    'debug-campaign-id': this.getContextValue(['urlParams', 'campaignId']),
+                    'debug-iframe-mode': this.context.isInIframe ? 'Yes' : 'No'
+                };
+                
+                // Update enhanced debug values
+                const enhancedDebugElements = {
+                    'debug-referer-domain': this.context.refererDomain || 'Not detected',
+                    'debug-parent-hostname': this.context.parentHostname || 'Not detected',
+                    'debug-extracted-location': this.context.extractedLocationId || 'Not detected',
+                    'debug-extracted-user': this.context.extractedUserId || 'Not detected',
+                    'debug-window-name': this.context.windowName ? (this.context.windowName.length > 50 ? this.context.windowName.substring(0, 50) + '...' : this.context.windowName) : 'Not detected',
+                    'debug-session-storage': this.context.sessionStorageData ? 'Found' : 'Not detected',
+                    'debug-local-storage': this.context.localStorageData ? 'Found' : 'Not detected',
+                    'debug-api-available': this.context.apiAvailable ? 'Yes' : 'No'
+                };
+                
+                // Update all debug elements
+                Object.entries(debugElements).forEach(([id, value]) => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.textContent = value || 'Not detected';
+                    }
+                });
+                
+                Object.entries(enhancedDebugElements).forEach(([id, value]) => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.textContent = value;
+                    }
+                });
+            }
+            
+            getContextValue(paths) {
+                for (const path of paths) {
+                    const value = this.getValueByPath(this.context, path);
+                    if (value) return value;
+                }
+                return null;
+            }
+            
+            getValueByPath(obj, path) {
+                return path.split('.').reduce((current, key) => current && current[key], obj);
+            }
+            
+            hasAnyContext() {
+                return this.context.location || this.context.urlParams || this.context.ghlContext || 
+                       this.context.user || this.context.contact || this.context.isFromGHL;
+            }
+            
+            showMainContent() {
+                document.getElementById('loading-section').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+                
+                // Populate main content based on context
+                this.populateMainContent();
+            }
+            
+            showNoContextMessage() {
+                document.getElementById('loading-section').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+                
+                const statusDiv = document.getElementById('integration-status');
+                if (statusDiv) {
+                    statusDiv.innerHTML = `
+                        <div class="status-card warning">
+                            <div class="status-header">
+                                <div class="status-icon warning">⚠️</div>
+                                <div class="status-title">Limited Context Detected</div>
+                            </div>
+                            <div class="status-details">
+                                We couldn't detect full GoHighLevel context, but the app is working. 
+                                Check the debug section below for what we found.
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            populateMainContent() {
+                // This will be populated based on your integration status
+                // For now, show a basic message
+                const statusDiv = document.getElementById('integration-status');
+                if (statusDiv) {
+                    statusDiv.innerHTML = `
+                        <div class="status-card success">
+                            <div class="status-header">
+                                <div class="status-icon success">✅</div>
+                                <div class="status-title">Context Detected</div>
+                            </div>
+                            <div class="status-details">
+                                GoHighLevel context has been detected. Check the debug section below for details.
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            async sendContextToBackend() {
+                try {
+                    console.log('📤 Sending context to Django backend...');
+                    
+                    // Log what we're about to send
+                    const requestData = {
+                        context: this.context,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    console.log('📦 Request data being sent:');
+                    console.log('   - Timestamp:', requestData.timestamp);
+                    console.log('   - Context keys:', Object.keys(requestData.context));
+                    console.log('   - Full context:', JSON.stringify(requestData.context, null, 2));
+                    
+                    const response = await fetch('/app/user-identification/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            // Removed CSRF token since we're using csrf_exempt
+                        },
+                        body: JSON.stringify(requestData)
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        console.log('✅ Context sent to backend successfully!');
+                        console.log('📥 Response received:', result);
+                        
+                        // Log the response details
+                        if (result.integration) {
+                            console.log('🏢 Integration found:', result.integration);
+                        } else {
+                            console.log('⚠️ No integration found:', result.integration_error);
+                        }
+                    } else {
+                        console.log('❌ Failed to send context to backend');
+                        console.log('   - Status:', response.status);
+                        console.log('   - Status Text:', response.statusText);
+                        
+                        // Try to get error details
+                        try {
+                            const errorData = await response.json();
+                            console.log('   - Error details:', errorData);
+                        } catch (e) {
+                            console.log('   - Could not parse error response');
+                        }
+                    }
+                } catch (e) {
+                    console.log('❌ Error sending context to backend:', e);
+                    console.log('   - Error type:', e.name);
+                    console.log('   - Error message:', e.message);
+                }
+            }
+        }
+        
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                new GoHighLevelContext();
+            });
+        } else {
+            new GoHighLevelContext();
+        }
+        
+        // Immediately display referer URL
+        function displayReferer() {
+            const referer = document.referrer;
+            const refererDisplay = document.getElementById('referer-display');
+            
+            if (refererDisplay) {
+                if (referer && referer.length > 0) {
+                    refererDisplay.textContent = referer;
+                    refererDisplay.style.color = '#98fb98'; // Green for success
+                    console.log('🔗 Referer URL displayed:', referer);
+                    
+                    // Also log to console for debugging
+                    console.log('=== REFERER ANALYSIS ===');
+                    console.log('Full referer:', referer);
+                    
+                    try {
+                        const url = new URL(referer);
+                        console.log('Hostname:', url.hostname);
+                        console.log('Pathname:', url.pathname);
+                        console.log('Search params:', url.search);
+                        console.log('Hash:', url.hash);
+                        
+                        // Show if it's from GoHighLevel
+                        if (url.hostname.includes('gohighlevel.com') || url.hostname.includes('leadconnectorhq.com')) {
+                            console.log('✅ This is from GoHighLevel!');
+                        } else {
+                            console.log('❌ Not from GoHighLevel domain');
+                        }
+                        
+                        // Parse search parameters
+                        const params = new URLSearchParams(url.search);
+                        console.log('All search parameters:');
+                        for (const [key, value] of params.entries()) {
+                            console.log(`  ${key}: ${value}`);
+                        }
+                        
+                    } catch (e) {
+                        console.log('⚠️ Could not parse referer URL:', e);
+                    }
+                    console.log('=======================');
+                    
+                } else {
+                    refererDisplay.textContent = 'No referer found (iframe or direct access)';
+                    refererDisplay.style.color = '#ff6b6b'; // Red for no referer
+                    console.log('❌ No referer found - trying alternative methods...');
+                    
+                    // Try alternative detection methods for iframes
+                    tryAlternativeDetection();
+                }
+            }
+        }
+        
+        // Alternative detection methods when referer is empty
+        function tryAlternativeDetection() {
+            console.log('🔍 Trying alternative detection methods...');
+            
+            // Show the alternative detection results section
+            const alternativeSection = document.getElementById('alternative-detection-results');
+            if (alternativeSection) {
+                alternativeSection.style.display = 'block';
+            }
+            
+            // Method 1: Check if we're in an iframe
+            const isInIframe = window.self !== window.top;
+            console.log('📍 In iframe:', isInIframe);
+            
+            // Update iframe status in UI
+            const iframeStatus = document.getElementById('iframe-status');
+            if (iframeStatus) {
+                iframeStatus.textContent = isInIframe ? 'Yes' : 'No';
+                iframeStatus.style.color = isInIframe ? '#98fb98' : '#ff6b6b';
+            }
+            
+            if (isInIframe) {
+                console.log('✅ Detected iframe mode - trying to get parent context...');
+                
+                // Method 2: Try to get parent window info
+                try {
+                    const parentOrigin = window.parent.location.origin;
+                    const parentHostname = window.parent.location.hostname;
+                    console.log('📍 Parent origin:', parentOrigin);
+                    console.log('📍 Parent hostname:', parentHostname);
+                    
+                    // Update parent hostname in UI
+                    const parentHostnameElement = document.getElementById('parent-hostname');
+                    if (parentHostnameElement) {
+                        parentHostnameElement.textContent = parentHostname;
+                        parentHostnameElement.style.color = '#98fb98';
+                    }
+                    
+                    // Check if parent is GoHighLevel
+                    if (parentHostname.includes('gohighlevel.com') || parentHostname.includes('leadconnectorhq.com')) {
+                        console.log('✅ Parent window is GoHighLevel!');
+                        
+                        // Try to get parent URL (might contain user context)
+                        try {
+                            const parentUrl = window.parent.location.href;
+                            console.log('📍 Parent URL:', parentUrl);
+                            
+                            // Parse parent URL for context
+                            const parentUrlObj = new URL(parentUrl);
+                            console.log('📍 Parent pathname:', parentUrlObj.pathname);
+                            console.log('📍 Parent search params:', parentUrlObj.search);
+                            
+                            // Extract potential IDs from parent URL
+                            extractIdsFromURL(parentUrlObj, 'Parent URL');
+                            
+                        } catch (e) {
+                            console.log('⚠️ Cannot access parent URL (cross-origin restriction)');
+                        }
+                        
+                    } else {
+                        console.log('❌ Parent is not GoHighLevel:', parentHostname);
+                    }
+                    
+                } catch (e) {
+                    console.log('⚠️ Cannot access parent window (cross-origin restriction)');
+                    console.log('This is normal for GoHighLevel iframes');
+                    
+                    // Update parent hostname in UI
+                    const parentHostnameElement = document.getElementById('parent-hostname');
+                    if (parentHostnameElement) {
+                        parentHostnameElement.textContent = 'Cross-origin (cannot access)';
+                        parentHostnameElement.style.color = '#ffa500';
+                    }
+                }
+                
+                // Method 3: Check window.name (sometimes used by GHL)
+                if (window.name && window.name.length > 0) {
+                    console.log('📍 Window name found:', window.name);
+                    
+                    // Update window name status in UI
+                    const windowNameStatus = document.getElementById('window-name-status');
+                    if (windowNameStatus) {
+                        windowNameStatus.textContent = 'Found: ' + (window.name.length > 30 ? window.name.substring(0, 30) + '...' : window.name);
+                        windowNameStatus.style.color = '#98fb98';
+                    }
+                    
+                    // Try to parse JSON from window.name
+                    try {
+                        const nameData = JSON.parse(window.name);
+                        if (nameData && typeof nameData === 'object') {
+                            console.log('✅ Parsed window.name data:', nameData);
+                            
+                            // Look for user context in window.name
+                            if (nameData.locationId || nameData.userId || nameData.companyId) {
+                                console.log('✅ Found user context in window.name!');
+                                console.log('  Location ID:', nameData.locationId);
+                                console.log('  User ID:', nameData.userId);
+                                console.log('  Company ID:', nameData.companyId);
+                                
+                                // Update found IDs in UI
+                                updateFoundIDs(nameData);
+                            }
+                        }
+                    } catch (e) {
+                        console.log('⚠️ Window name is not JSON:', e);
+                        
+                        // Check if window.name contains IDs in other formats
+                        if (window.name.includes('locationId=') || window.name.includes('userId=')) {
+                            console.log('📍 Window name contains ID patterns');
+                            console.log('  Raw content:', window.name);
+                            
+                            // Update found IDs in UI
+                            updateFoundIDs({ raw: window.name });
+                        }
+                    }
+                } else {
+                    console.log('❌ No window.name found');
+                    
+                    // Update window name status in UI
+                    const windowNameStatus = document.getElementById('window-name-status');
+                    if (windowNameStatus) {
+                        windowNameStatus.textContent = 'Not found';
+                        windowNameStatus.style.color = '#ff6b6b';
+                    }
+                }
+                
+                // Method 4: Check for GHL-specific global variables
+                setTimeout(() => {
+                    console.log('🔍 Checking for GoHighLevel global variables...');
+                    
+                    // Check common GHL global variables
+                    const ghlGlobals = [
+                        'window.GoHighLevel',
+                        'window.GHL',
+                        'window.gohighlevel',
+                        'window.leadconnector',
+                        'window.ghl_user',
+                        'window.ghl_location',
+                        'window.ghl_contact'
+                    ];
+                    
+                    ghlGlobals.forEach(global => {
+                        try {
+                            const value = eval(global);
+                            if (value) {
+                                console.log(`✅ Found global variable: ${global} =`, value);
+                            }
+                        } catch (e) {
+                            // Variable doesn't exist
+                        }
+                    });
+                    
+                    // Check if any GHL-related objects exist
+                    if (typeof window.GoHighLevel !== 'undefined') {
+                        console.log('✅ GoHighLevel global object exists!');
+                        console.log('  Available methods:', Object.getOwnPropertyNames(window.GoHighLevel));
+                    }
+                    
+                }, 1000); // Wait a bit for GHL to load
+                
+                // Method 5: Listen for messages from parent
+                console.log('🔍 Setting up message listener for parent communication...');
+                window.addEventListener('message', (event) => {
+                    console.log('📨 Message received from parent:', event.data);
+                    
+                    if (event.data && event.data.type) {
+                        console.log('✅ Received structured message from parent');
+                        console.log('  Type:', event.data.type);
+                        console.log('  Data:', event.data);
+                        
+                        // Handle specific message types
+                        if (event.data.locationId || event.data.userId || event.data.companyId) {
+                            console.log('✅ Message contains user context!');
+                            updateFoundIDs(event.data);
+                        }
+                    }
+                });
+                
+                // Method 6: Request context from parent
+                if (window.parent && window.parent !== window) {
+                    console.log('📤 Requesting context from parent...');
+                    
+                    // Send multiple types of requests
+                    const requests = [
+                        { type: 'whatreach-request-context', message: 'Please provide user context' },
+                        { type: 'ghl-get-context', message: 'Get current context' },
+                        { type: 'ghl-get-user', message: 'Get current user' },
+                        { type: 'ghl-get-location', message: 'Get current location' },
+                        { type: 'ghl-init', message: 'Initialize communication' }
+                    ];
+                    
+                    requests.forEach(request => {
+                        window.parent.postMessage(request, '*');
+                        console.log('📤 Sent request:', request.type);
+                    });
+                }
+                
+            } else {
+                console.log('❌ Not in iframe - direct access');
+                
+                // Update iframe status in UI
+                const iframeStatus = document.getElementById('iframe-status');
+                if (iframeStatus) {
+                    iframeStatus.textContent = 'No - Direct Access';
+                    iframeStatus.style.color = '#ff6b6b';
+                }
+            }
+            
+            // Method 7: Check current URL for any context
+            const currentUrl = window.location.href;
+            console.log('📍 Current URL:', currentUrl);
+            
+            if (currentUrl.includes('?') || currentUrl.includes('#')) {
+                console.log('📍 Current URL has parameters - checking for context...');
+                const currentUrlObj = new URL(currentUrl);
+                extractIdsFromURL(currentUrlObj, 'Current URL');
+            }
+            
+            // Method 8: Check for any GHL-related cookies
+            console.log('🔍 Checking for GoHighLevel cookies...');
+            const cookies = document.cookie.split(';');
+            cookies.forEach(cookie => {
+                const [name, value] = cookie.trim().split('=');
+                if (name.toLowerCase().includes('ghl') || name.toLowerCase().includes('gohighlevel') || 
+                    name.toLowerCase().includes('leadconnector')) {
+                    console.log(`📍 Found GHL-related cookie: ${name} = ${value}`);
+                }
+            });
+        }
+        
+        // Helper function to update found IDs in UI
+        function updateFoundIDs(data) {
+            const foundIdsElement = document.getElementById('found-ids');
+            if (foundIdsElement) {
+                let idsText = '';
+                
+                if (data.locationId) idsText += `Location: ${data.locationId} `;
+                if (data.userId) idsText += `User: ${data.userId} `;
+                if (data.companyId) idsText += `Company: ${data.companyId} `;
+                if (data.contactId) idsText += `Contact: ${data.contactId} `;
+                if (data.raw) idsText += `Raw: ${data.raw.substring(0, 50)}...`;
+                
+                if (idsText) {
+                    foundIdsElement.textContent = idsText;
+                    foundIdsElement.style.color = '#98fb98';
+                } else {
+                    foundIdsElement.textContent = 'No IDs found yet';
+                    foundIdsElement.style.color = '#ffa500';
+                }
+            }
+        }
+        
+        // Helper function to extract IDs from URLs
+        function extractIdsFromURL(urlObj, source) {
+            console.log(`🔍 Extracting IDs from ${source}...`);
+            
+            // Check pathname for ID patterns
+            const pathname = urlObj.pathname;
+            console.log(`  Pathname: ${pathname}`);
+            
+            // Common ID patterns in GHL URLs
+            const idPatterns = [
+                { pattern: /\/location\/([^\/\?]+)/, name: 'Location ID' },
+                { pattern: /\/contact\/([^\/\?]+)/, name: 'Contact ID' },
+                { pattern: /\/user\/([^\/\?]+)/, name: 'User ID' },
+                { pattern: /\/company\/([^\/\?]+)/, name: 'Company ID' },
+                { pattern: /\/funnel\/([^\/\?]+)/, name: 'Funnel ID' },
+                { pattern: /\/page\/([^\/\?]+)/, name: 'Page ID' },
+                { pattern: /\/campaign\/([^\/\?]+)/, name: 'Campaign ID' }
+            ];
+            
+            idPatterns.forEach(({ pattern, name }) => {
+                const match = pathname.match(pattern);
+                if (match) {
+                    console.log(`  ✅ ${name}: ${match[1]}`);
+                }
+            });
+            
+            // Check search parameters
+            const searchParams = urlObj.searchParams;
+            console.log(`  Search parameters: ${searchParams.toString()}`);
+            
+            // Common GHL search parameters
+            const commonParams = ['locationId', 'userId', 'companyId', 'contactId', 'funnelId', 'pageId', 'campaignId'];
+            commonParams.forEach(param => {
+                const value = searchParams.get(param);
+                if (value) {
+                    console.log(`  ✅ ${param}: ${value}`);
+                }
+            });
+        }
+        
+        // Display referer immediately
+        displayReferer();
+        
+        // Log initial state
+        console.log('=== WhatReach App Landing - Initializing ===');
+        console.log('Window location:', window.location.href);
+        console.log('Referer:', document.referrer);
+        console.log('User agent:', navigator.userAgent);
+        console.log('Is in iframe:', window.self !== window.top);
+        console.log('==========================================');
+    </script>
+</body>
+</html>

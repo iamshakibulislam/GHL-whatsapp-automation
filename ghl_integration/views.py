@@ -1,14 +1,22 @@
 import json
 import requests
 from datetime import datetime, timedelta
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from django.utils.decorators import method_decorator
 from django.utils import timezone
 from django.conf import settings
+from django.contrib import messages
+from django.urls import reverse
+from django.db import transaction
 from .models import GoHighLevelIntegration, GoHighLevelWebhook
-from .services import TokenRefreshService, TokenHealthService
+from .services import TokenRefreshService, TokenHealthService, GoHighLevelDecryptionService
+import logging
+import base64
+
+logger = logging.getLogger(__name__)
 
 
 # GoHighLevel OAuth configuration
@@ -610,4 +618,850 @@ def get_valid_token(request, integration_id):
         return JsonResponse({
             'error': 'Failed to get valid token',
             'details': str(e)
+        }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST", "OPTIONS"])
+def user_identification(request):
+    """
+    Handle user identification requests from the frontend
+    """
+    if request.method == "OPTIONS":
+        response = JsonResponse({})
+        response["Access-Control-Allow-Origin"] = "*"
+        response["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+        response["Access-Control-Allow-Headers"] = "Content-Type"
+        return response
+
+    try:
+        # Parse the request body
+        body = request.body.decode('utf-8')
+        data = json.loads(body) if body else {}
+        
+        # Extract context data
+        context = data.get('context', {})
+        
+        # Initialize user data
+        user_data = {
+            'location_id': None,
+            'user_id': None,
+            'company_id': None,
+            'user_email': None,
+            'detection_methods': []
+        }
+
+        # Check for encrypted postMessage data
+        if context.get('encrypted_user_data'):
+            encrypted_data = context.get('encrypted_user_data')
+            
+            # Check if data is already decrypted by frontend
+            if context.get('decryption_successful') and context.get('decrypted_user_data'):
+                # Frontend already decrypted the data
+                decrypted_data = context.get('decrypted_user_data')
+                
+                # Extract comprehensive user data
+                user_data.update({
+                    'location_id': decrypted_data.get('activeLocation') or decrypted_data.get('locationId') or decrypted_data.get('companyId'),
+                    'user_id': decrypted_data.get('userId') or decrypted_data.get('id'),
+                    'company_id': decrypted_data.get('companyId'),
+                    'user_email': decrypted_data.get('email'),
+                    'user_name': decrypted_data.get('userName') or decrypted_data.get('name'),
+                    'user_role': decrypted_data.get('role'),
+                    'location_name': decrypted_data.get('locationName'),
+                    'company_name': decrypted_data.get('companyName'),
+                    'detection_methods': ['PostMessage + Frontend Decryption']
+                })
+                
+                print(f"✅ User data received (frontend decrypted):")
+                print(f"   User ID: {user_data['user_id']}")
+                print(f"   Email: {user_data['user_email']}")
+                print(f"   Company ID: {user_data['company_id']}")
+                print(f"   Location ID: {user_data['location_id']}")
+                print(f"   User Name: {user_data['user_name']}")
+                print(f"   User Role: {user_data['user_role']}")
+                print(f"   Location Name: {user_data['location_name']}")
+                print(f"   Company Name: {user_data['company_name']}")
+                print(f"   Raw encrypted data: {encrypted_data[:100]}...")
+                
+                # Create comprehensive session for this user
+                request.session['ghl_user_data'] = {
+                    # Core identification
+                    'user_id': user_data['user_id'],
+                    'user_email': user_data['user_email'],
+                    'user_name': user_data['user_name'],
+                    'user_role': user_data['user_role'],
+                    
+                    # GoHighLevel context
+                    'company_id': user_data['company_id'],
+                    'company_name': user_data['company_name'],
+                    'location_id': user_data['location_id'],
+                    'location_name': user_data['location_name'],
+                    
+                    # Additional context from decrypted data
+                    'ghl_context': {
+                        'raw_decrypted_data': decrypted_data,
+                        'encrypted_data_sample': encrypted_data[:100] + '...' if len(encrypted_data) > 100 else encrypted_data
+                    },
+                    
+                    # Session metadata
+                    'detection_methods': user_data['detection_methods'],
+                    'session_created': timezone.now().isoformat(),
+                    'last_activity': timezone.now().isoformat(),
+                    'session_version': '2.0'  # Track session format version
+                }
+                
+                # Set session expiry (24 hours)
+                request.session.set_expiry(86400)
+                
+                print(f"✅ Comprehensive user session created:")
+                print(f"   Session ID: {request.session.session_key}")
+                print(f"   User ID: {user_data['user_id']}")
+                print(f"   Company ID: {user_data['company_id']}")
+                print(f"   Location ID: {user_data['location_id']}")
+                print(f"   Session expires in: 24 hours")
+                print(f"   Stored fields: {list(request.session['ghl_user_data'].keys())}")
+                
+            else:
+                # Attempt to decrypt the data in backend
+                try:
+                    decrypted_data = GoHighLevelDecryptionService.decrypt_user_data(encrypted_data)
+                    if decrypted_data:
+                        # Use decrypted data for user identification
+                        user_data.update({
+                            'location_id': decrypted_data.get('activeLocation') or decrypted_data.get('companyId'),
+                            'user_id': decrypted_data.get('userId') or decrypted_data.get('id'),
+                            'company_id': decrypted_data.get('companyId'),
+                            'user_email': decrypted_data.get('email'),
+                            'user_name': decrypted_data.get('userName') or decrypted_data.get('name'),
+                            'user_role': decrypted_data.get('role'),
+                            'location_name': decrypted_data.get('locationName'),
+                            'company_name': decrypted_data.get('companyName'),
+                            'detection_methods': ['PostMessage + Backend Decryption']
+                        })
+                        
+                        print(f"✅ User identified via backend decryption:")
+                        print(f"   User ID: {user_data['user_id']}")
+                        print(f"   Email: {user_data['user_email']}")
+                        print(f"   Company ID: {user_data['company_id']}")
+                        print(f"   Location ID: {user_data['location_id']}")
+                        print(f"   User Name: {user_data['user_name']}")
+                        print(f"   User Role: {user_data['user_role']}")
+                        print(f"   Location Name: {user_data['location_name']}")
+                        print(f"   Company Name: {user_data['company_name']}")
+                        
+                        # Create comprehensive session for this user
+                        request.session['ghl_user_data'] = {
+                            # Core identification
+                            'user_id': user_data['user_id'],
+                            'user_email': user_data['user_email'],
+                            'user_name': user_data['user_name'],
+                            'user_role': user_data['user_role'],
+                            
+                            # GoHighLevel context
+                            'company_id': user_data['company_id'],
+                            'company_name': user_data['company_name'],
+                            'location_id': user_data['location_id'],
+                            'location_name': user_data['location_name'],
+                            
+                            # Additional context from decrypted data
+                            'ghl_context': {
+                                'raw_decrypted_data': decrypted_data,
+                                'encrypted_data_sample': 'Backend decrypted'
+                            },
+                            
+                            # Session metadata
+                            'detection_methods': user_data['detection_methods'],
+                            'session_created': timezone.now().isoformat(),
+                            'last_activity': timezone.now().isoformat(),
+                            'session_version': '2.0'  # Track session format version
+                        }
+                        
+                        # Set session expiry (24 hours)
+                        request.session.set_expiry(86400)
+                        
+                        print(f"✅ Comprehensive user session created (backend):")
+                        print(f"   Session ID: {request.session.session_key}")
+                        print(f"   User ID: {user_data['user_id']}")
+                        print(f"   Company ID: {user_data['company_id']}")
+                        print(f"   Location ID: {user_data['location_id']}")
+                        print(f"   Session expires in: 24 hours")
+                        print(f"   Stored fields: {list(request.session['ghl_user_data'].keys())}")
+                        
+                    else:
+                        print("❌ Backend decryption failed")
+                        
+                except Exception as e:
+                    print(f"❌ Backend decryption error: {str(e)}")
+
+        # Check for other detection methods
+        if not user_data['user_id']:
+            # Try URL parameters
+            location_id = request.GET.get('locationId') or request.GET.get('location_id')
+            user_id = request.GET.get('userId') or request.GET.get('user_id')
+            company_id = request.GET.get('companyId') or request.GET.get('company_id')
+            
+            if location_id or user_id or company_id:
+                user_data.update({
+                    'location_id': location_id,
+                    'user_id': user_id,
+                    'company_id': company_id,
+                    'user_email': request.GET.get('userEmail') or request.GET.get('email'),
+                    'user_name': request.GET.get('userName') or request.GET.get('name'),
+                    'user_role': request.GET.get('userRole') or request.GET.get('role'),
+                    'location_name': request.GET.get('locationName'),
+                    'company_name': request.GET.get('companyName'),
+                    'detection_methods': ['URL Parameters']
+                })
+                print(f"✅ User identified via URL parameters:")
+                print(f"   Location ID: {location_id}")
+                print(f"   User ID: {user_id}")
+                print(f"   Company ID: {company_id}")
+                print(f"   User Email: {user_data['user_email']}")
+                print(f"   User Name: {user_data['user_name']}")
+                print(f"   User Role: {user_data['user_role']}")
+                print(f"   Location Name: {user_data['location_name']}")
+                print(f"   Company Name: {user_data['company_name']}")
+                
+                # Create comprehensive session for this user
+                request.session['ghl_user_data'] = {
+                    # Core identification
+                    'user_id': user_id,
+                    'user_email': user_data['user_email'],
+                    'user_name': user_data['user_name'],
+                    'user_role': user_data['user_role'],
+                    
+                    # GoHighLevel context
+                    'company_id': company_id,
+                    'company_name': user_data['company_name'],
+                    'location_id': location_id,
+                    'location_name': user_data['location_name'],
+                    
+                    # Additional context from URL parameters
+                    'ghl_context': {
+                        'raw_url_params': dict(request.GET),
+                        'detection_method': 'URL Parameters'
+                    },
+                    
+                    # Session metadata
+                    'detection_methods': user_data['detection_methods'],
+                    'session_created': timezone.now().isoformat(),
+                    'last_activity': timezone.now().isoformat(),
+                    'session_version': '2.0'  # Track session format version
+                }
+                request.session.set_expiry(86400)
+                
+                print(f"✅ Comprehensive user session created (URL params):")
+                print(f"   Session ID: {request.session.session_key}")
+                print(f"   User ID: {user_id}")
+                print(f"   Company ID: {company_id}")
+                print(f"   Location ID: {location_id}")
+                print(f"   Session expires in: 24 hours")
+                print(f"   Stored fields: {list(request.session['ghl_user_data'].keys())}")
+
+        # Check for HTTP headers
+        if not user_data['user_id']:
+            referer = request.META.get('HTTP_REFERER', '')
+            origin = request.META.get('HTTP_ORIGIN', '')
+            
+            if referer or origin:
+                user_data['detection_methods'].append('HTTP Headers')
+                print(f"📋 HTTP Headers:")
+                print(f"   Referer: {referer}")
+                print(f"   Origin: {origin}")
+
+        # Final user data summary
+        print(f"\n🎯 FINAL USER DATA:")
+        print(f"   Location ID: {user_data['location_id']}")
+        print(f"   User ID: {user_data['user_id']}")
+        print(f"   Company ID: {user_data['company_id']}")
+        print(f"   Email: {user_data['user_email']}")
+        print(f"   Detection Methods: {', '.join(user_data['detection_methods'])}")
+
+        # Return the user data
+        return JsonResponse({
+            'success': True,
+            'user_data': user_data,
+            'timestamp': timezone.now().isoformat()
+        })
+
+    except json.JSONDecodeError as e:
+        print(f"❌ JSON decode error: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid JSON data'
+        }, status=400)
+    except Exception as e:
+        print(f"❌ Unexpected error: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+def app_landing(request):
+    """
+    Main app landing page that appears when users click on the app in GHL sidebar
+    """
+    try:
+        # SERVER-SIDE REFERER TRACKING
+        print("=== SERVER-SIDE REFERER ANALYSIS ===")
+        
+        # Get referer from HTTP headers
+        referer = request.META.get('HTTP_REFERER', '')
+        print(f"HTTP_REFERER: {referer}")
+        
+        # Get all HTTP headers for debugging
+        all_headers = {k: v for k, v in request.META.items() if k.startswith('HTTP_')}
+        print(f"All HTTP headers: {all_headers}")
+        
+        # Get additional request information
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
+        host = request.META.get('HTTP_HOST', '')
+        origin = request.META.get('HTTP_ORIGIN', '')
+        sec_fetch_dest = request.META.get('HTTP_SEC_FETCH_DEST', '')
+        sec_fetch_site = request.META.get('HTTP_SEC_FETCH_SITE', '')
+        
+        print(f"User Agent: {user_agent}")
+        print(f"Host: {host}")
+        print(f"Origin: {origin}")
+        print(f"Sec-Fetch-Dest: {sec_fetch_dest}")
+        print(f"Sec-Fetch-Site: {sec_fetch_site}")
+        
+        # Analyze referer if available
+        referer_analysis = {}
+        if referer:
+            try:
+                from urllib.parse import urlparse, parse_qs
+                parsed_url = urlparse(referer)
+                
+                referer_analysis = {
+                    'scheme': parsed_url.scheme,
+                    'hostname': parsed_url.hostname,
+                    'path': parsed_url.path,
+                    'query_params': parse_qs(parsed_url.query),
+                    'fragment': parsed_url.fragment,
+                    'is_ghl': any(domain in parsed_url.hostname.lower() for domain in ['gohighlevel.com', 'leadconnectorhq.com'])
+                }
+                
+                print(f"Referer Analysis: {referer_analysis}")
+                
+                # Extract potential user context from referer
+                if referer_analysis['is_ghl']:
+                    print("✅ Referer is from GoHighLevel!")
+                    
+                    # Extract IDs from path
+                    path_parts = parsed_url.path.strip('/').split('/')
+                    print(f"Path parts: {path_parts}")
+                    
+                    # Look for ID patterns in path
+                    for i, part in enumerate(path_parts):
+                        if part in ['location', 'contact', 'user', 'company', 'funnel', 'page', 'campaign']:
+                            if i + 1 < len(path_parts):
+                                id_value = path_parts[i + 1]
+                                print(f"✅ Found {part} ID: {id_value}")
+                                referer_analysis[f'{part}_id'] = id_value
+                    
+                    # Extract IDs from query parameters
+                    for key, values in referer_analysis['query_params'].items():
+                        if any(id_type in key.lower() for id_type in ['id', 'location', 'user', 'company', 'contact']):
+                            print(f"✅ Found query param {key}: {values[0]}")
+                            referer_analysis[f'query_{key}'] = values[0]
+                            
+            except Exception as e:
+                print(f"⚠️ Error parsing referer: {e}")
+                referer_analysis = {'error': str(e)}
+        else:
+            print("❌ No referer header found")
+            
+            # Check if this might be an iframe request
+            if sec_fetch_dest == 'iframe':
+                print("✅ Detected iframe request (Sec-Fetch-Dest: iframe)")
+                referer_analysis['iframe_request'] = True
+                
+            if sec_fetch_site == 'cross-site':
+                print("✅ Detected cross-site request (Sec-Fetch-Site: cross-site)")
+                referer_analysis['cross_site'] = True
+                
+            if origin:
+                print(f"✅ Found Origin header: {origin}")
+                referer_analysis['origin'] = origin
+                
+                # Check if origin is from GoHighLevel
+                if any(domain in origin.lower() for domain in ['gohighlevel.com', 'leadconnectorhq.com']):
+                    print("✅ Origin is from GoHighLevel!")
+                    referer_analysis['origin_is_ghl'] = True
+        
+        print("=====================================")
+        
+        # Get ALL possible user identification parameters from GoHighLevel
+        location_id = request.GET.get('locationId')
+        user_id = request.GET.get('userId')
+        company_id = request.GET.get('companyId')
+        contact_id = request.GET.get('contactId')
+        funnel_id = request.GET.get('funnelId')
+        page_id = request.GET.get('pageId')
+        campaign_id = request.GET.get('campaignId')
+        
+        # Get referer and user agent for additional context
+        referer = request.META.get('HTTP_REFERER', '')
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
+        
+        # Log all parameters for debugging
+        print(f"=== GoHighLevel App Landing Request ===")
+        print(f"Location ID: {location_id}")
+        print(f"User ID: {user_id}")
+        print(f"Company ID: {company_id}")
+        print(f"Contact ID: {contact_id}")
+        print(f"Funnel ID: {funnel_id}")
+        print(f"Page ID: {page_id}")
+        print(f"Campaign ID: {campaign_id}")
+        print(f"Referer: {referer}")
+        print(f"User Agent: {user_agent}")
+        print(f"All GET params: {dict(request.GET)}")
+        print(f"All headers: {dict(request.META)}")
+        print(f"=====================================")
+        
+        # Combine server-side and client-side detection
+        context = {
+            'location_id': location_id,
+            'user_id': user_id,
+            'company_id': company_id,
+            'contact_id': contact_id,
+            'funnel_id': funnel_id,
+            'page_id': page_id,
+            'campaign_id': campaign_id,
+            'referer': referer,
+            'user_agent': user_agent,
+            'all_params': dict(request.GET),
+            'has_integration': False,
+            'integration': None,
+            # Server-side referer analysis
+            'server_referer_analysis': referer_analysis,
+            'http_headers': all_headers,
+            'is_iframe_request': sec_fetch_dest == 'iframe',
+            'is_cross_site': sec_fetch_site == 'cross-site',
+            'origin_header': origin,
+        }
+        
+        # Try to extract location ID from server-side analysis if not in GET params
+        if not location_id and referer_analysis.get('location_id'):
+            location_id = referer_analysis['location_id']
+            context['location_id'] = location_id
+            print(f"✅ Extracted location ID from referer: {location_id}")
+            
+        if not location_id and referer_analysis.get('query_locationId'):
+            location_id = referer_analysis['query_locationId']
+            context['location_id'] = location_id
+            print(f"✅ Extracted location ID from referer query: {location_id}")
+        
+        if location_id:
+            # Check if we have an integration for this location
+            try:
+                integration = GoHighLevelIntegration.objects.get(
+                    location_id=location_id,
+                    is_active=True
+                )
+                context['has_integration'] = True
+                context['integration'] = integration
+                
+                # Check token status
+                context['token_status'] = {
+                    'is_expired': integration.is_token_expired,
+                    'needs_refresh': integration.needs_refresh,
+                    'expires_at': integration.expires_at,
+                    'last_used': integration.last_used_at,
+                }
+                
+                # Update last used timestamp
+                integration.last_used_at = timezone.now()
+                integration.save()
+                
+                print(f"✅ Integration found for location: {location_id}")
+                print(f"   Company: {integration.company_name}")
+                print(f"   User: {integration.user_email}")
+                
+            except GoHighLevelIntegration.DoesNotExist:
+                # No integration found - user needs to install
+                context['needs_installation'] = True
+                print(f"❌ No integration found for location: {location_id}")
+        else:
+            # No location ID - show installation instructions
+            context['needs_installation'] = True
+            print(f"⚠️ No location ID provided")
+            
+        # Set response headers for iframe embedding
+        response = render(request, 'ghl_integration/app_landing.html', context)
+        response['X-Frame-Options'] = 'ALLOWALL'  # Allow embedding in iframes
+        response['Access-Control-Allow-Origin'] = '*'  # Allow cross-origin requests
+        response['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+        response['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'  # Prevent caching
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error in app landing page: {str(e)}")
+        print(f"❌ Error in app landing: {str(e)}")
+        return render(request, 'ghl_integration/error.html', {
+            'error_message': 'Unable to load app. Please try again.'
+        })
+
+
+def app_manifest(request):
+    """
+    Generate and serve the GoHighLevel app manifest
+    """
+    manifest = {
+        "name": "WhatReach",
+        "description": "Advanced lead management and automation platform",
+        "version": "1.0.0",
+        "type": "private",
+        "author": "WhatReach Team",
+        "website": "https://814e0c0adec4.ngrok-free.app",
+        "icon": "https://814e0c0adec4.ngrok-free.app/static/ghl_integration/icon.svg",
+        "permissions": [
+            "contacts.read",
+            "contacts.write", 
+            "locations.read",
+            "users.read",
+            "sidebar.access",
+            "navigation.access"
+        ],
+        "sidebar_integration": {
+            "type": "iframe",
+            "url": "https://814e0c0adec4.ngrok-free.app/app/ghl-integration/",
+            "resizable": True,
+            "min_width": 400,
+            "min_height": 600,
+            "position": "right",
+            "order": 1,
+            "show_in_navigation": True,
+            "show_in_sidebar": True,
+            "show_in_header": False,
+            "show_in_footer": False
+        },
+        "post_install_redirect": "https://814e0c0adec4.ngrok-free.app/app/ghl-integration/"
+    }
+    
+    response = JsonResponse(manifest)
+    response['Content-Type'] = 'application/json'
+    response['Access-Control-Allow-Origin'] = '*'
+    return response
+
+
+def sidebar_integration(request):
+    """
+    Sidebar integration view - called by GoHighLevel to embed app in sidebar
+    """
+    try:
+        # Get the location_id from the request (GHL sends this)
+        location_id = request.GET.get('locationId')
+        user_id = request.GET.get('userId')
+        company_id = request.GET.get('companyId')
+        
+        context = {
+            'location_id': location_id,
+            'user_id': user_id,
+            'company_id': company_id,
+            'is_sidebar': True,  # Flag to indicate this is sidebar view
+            'has_integration': False,
+            'integration': None,
+        }
+        
+        if location_id:
+            # Check if we have an integration for this location
+            try:
+                integration = GoHighLevelIntegration.objects.get(
+                    location_id=location_id,
+                    is_active=True
+                )
+                context['has_integration'] = True
+                context['integration'] = integration
+                
+                # Check token status
+                context['token_status'] = {
+                    'is_expired': integration.is_token_expired,
+                    'needs_refresh': integration.needs_refresh,
+                    'expires_at': integration.expires_at,
+                    'last_used': integration.last_used_at,
+                }
+                
+            except GoHighLevelIntegration.DoesNotExist:
+                # No integration found - user needs to install
+                context['needs_installation'] = True
+        else:
+            # No location ID - show installation instructions
+            context['needs_installation'] = True
+            
+        # Set response headers for sidebar integration
+        response = render(request, 'ghl_integration/sidebar.html', context)
+        response['X-Frame-Options'] = 'ALLOWALL'  # Allow embedding in iframes
+        response['Access-Control-Allow-Origin'] = '*'  # Allow cross-origin requests
+        response['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+        response['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'  # Prevent caching
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error in sidebar integration: {str(e)}")
+        return render(request, 'ghl_integration/error.html', {
+            'error_message': 'Unable to load sidebar integration. Please try again.'
+        })
+
+
+def sidebar_widget(request):
+    """
+    Sidebar widget view for adding to GoHighLevel custom sidebar widgets
+    """
+    try:
+        # Get the location_id from the request (GHL sends this)
+        location_id = request.GET.get('locationId')
+        user_id = request.GET.get('userId')
+        company_id = request.GET.get('companyId')
+        
+        context = {
+            'location_id': location_id,
+            'user_id': user_id,
+            'company_id': company_id,
+            'is_sidebar_widget': True,  # Flag to indicate this is sidebar widget
+            'has_integration': False,
+            'integration': None,
+        }
+        
+        if location_id:
+            # Check if we have an integration for this location
+            try:
+                integration = GoHighLevelIntegration.objects.get(
+                    location_id=location_id,
+                    is_active=True
+                )
+                context['has_integration'] = True
+                context['integration'] = integration
+                
+                # Check token status
+                context['token_status'] = {
+                    'is_expired': integration.is_token_expired,
+                    'needs_refresh': integration.needs_refresh,
+                    'expires_at': integration.expires_at,
+                    'last_used': integration.last_used_at,
+                }
+                
+            except GoHighLevelIntegration.DoesNotExist:
+                # No integration found - user needs to install
+                context['needs_installation'] = True
+        else:
+            # No location ID - show installation instructions
+            context['needs_installation'] = True
+            
+        # Set response headers for widget embedding
+        response = render(request, 'ghl_integration/sidebar_widget.html', context)
+        response['X-Frame-Options'] = 'ALLOWALL'  # Allow embedding in iframes
+        response['Access-Control-Allow-Origin'] = '*'  # Allow cross-origin requests
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error in sidebar widget: {str(e)}")
+        return render(request, 'ghl_integration/error.html', {
+            'error_message': 'Unable to load sidebar widget. Please try again.'
+        })
+
+
+def test_iframe(request):
+    """Test iframe embedding"""
+    return render(request, 'ghl_integration/test_iframe.html')
+
+def postmessage_test(request):
+    """Test postMessage communication with GoHighLevel"""
+    return render(request, 'ghl_integration/postmessage_test.html')
+
+def require_ghl_session(view_func):
+    """Decorator to check if user has a valid GoHighLevel session"""
+    def wrapper(request, *args, **kwargs):
+        # Check if user has a valid session
+        user_data = request.session.get('ghl_user_data')
+        if user_data:
+            # User has valid session, add user data to request
+            request.ghl_user = user_data
+            return view_func(request, *args, **kwargs)
+        else:
+            # No session, redirect to user identification
+            return redirect('ghl_integration:user_identification')
+    return wrapper
+
+def ghl_app_integration(request):
+    """
+    Main GoHighLevel app integration view
+    Checks for existing session first, then shows appropriate content
+    """
+    # Check if user has existing session
+    user_data = request.session.get('ghl_user_data')
+    
+    if user_data:
+        # User has valid session, show authenticated content
+        print(f"✅ User authenticated via session:")
+        print(f"   User ID: {user_data['user_id']}")
+        print(f"   Email: {user_data['user_email']}")
+        print(f"   User Name: {user_data.get('user_name', 'N/A')}")
+        print(f"   User Role: {user_data.get('user_role', 'N/A')}")
+        print(f"   Company ID: {user_data['company_id']}")
+        print(f"   Company Name: {user_data.get('company_name', 'N/A')}")
+        print(f"   Location ID: {user_data['location_id']}")
+        print(f"   Location Name: {user_data.get('location_name', 'N/A')}")
+        print(f"   Session Version: {user_data.get('session_version', '1.0')}")
+        print(f"   Detection Methods: {', '.join(user_data.get('detection_methods', []))}")
+        
+        # Display GHL context if available
+        if 'ghl_context' in user_data:
+            print(f"   GHL Context: {list(user_data['ghl_context'].keys())}")
+        
+        # Check if we have an integration for this location
+        try:
+            integration = GoHighLevelIntegration.objects.get(
+                location_id=user_data['location_id'],
+                is_active=True
+            )
+            context = {
+                'user_data': user_data,
+                'integration': integration,
+                'is_authenticated': True,
+                'session_created': user_data.get('session_created'),
+                'last_activity': user_data.get('last_activity')
+            }
+        except GoHighLevelIntegration.DoesNotExist:
+            context = {
+                'user_data': user_data,
+                'integration': None,
+                'is_authenticated': True,
+                'session_created': user_data.get('session_created'),
+                'last_activity': user_data.get('last_activity'),
+                'message': 'Integration not found for this location'
+            }
+        
+        return render(request, 'ghl_integration/ghl_app_integration.html', context)
+    
+    else:
+        # No session, show unauthenticated content
+        print("ℹ️ No user session found, showing unauthenticated content")
+        context = {
+            'is_authenticated': False,
+            'message': 'Please authenticate with GoHighLevel to continue'
+        }
+        return render(request, 'ghl_integration/ghl_app_integration.html', context)
+
+
+@csrf_exempt
+@require_http_methods(["POST", "OPTIONS"])
+def logout_user(request):
+    """
+    Handle user logout and clear session
+    """
+    if request.method == "OPTIONS":
+        response = JsonResponse({})
+        response["Access-Control-Allow-Origin"] = "*"
+        response["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+        response["Access-Control-Allow-Headers"] = "Content-Type"
+        return response
+
+    try:
+        # Clear the GoHighLevel user session
+        if 'ghl_user_data' in request.session:
+            user_data = request.session['ghl_user_data']
+            print(f"🚪 User logging out:")
+            print(f"   User ID: {user_data.get('user_id')}")
+            print(f"   Email: {user_data.get('user_email')}")
+            print(f"   User Name: {user_data.get('user_name', 'N/A')}")
+            print(f"   User Role: {user_data.get('user_role', 'N/A')}")
+            print(f"   Company ID: {user_data.get('company_id')}")
+            print(f"   Company Name: {user_data.get('company_name', 'N/A')}")
+            print(f"   Location ID: {user_data.get('location_id')}")
+            print(f"   Location Name: {user_data.get('location_name', 'N/A')}")
+            print(f"   Session Version: {user_data.get('session_version', '1.0')}")
+            print(f"   Detection Methods: {', '.join(user_data.get('detection_methods', []))}")
+            
+            # Display GHL context if available
+            if 'ghl_context' in user_data:
+                print(f"   GHL Context: {list(user_data['ghl_context'].keys())}")
+            
+            # Clear the session
+            del request.session['ghl_user_data']
+            request.session.flush()
+            
+            print("✅ Session cleared successfully")
+            
+        else:
+            print("ℹ️ No user session found to clear")
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Logged out successfully'
+        })
+
+    except Exception as e:
+        print(f"❌ Logout error: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["GET", "POST", "OPTIONS"])
+def check_session(request):
+    """
+    Check current session status
+    """
+    if request.method == "OPTIONS":
+        response = JsonResponse({})
+        response["Access-Control-Allow-Origin"] = "*"
+        response["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+        response["Access-Control-Allow-Headers"] = "Content-Type"
+        return response
+
+    try:
+        # Check if user has existing session
+        user_data = request.session.get('ghl_user_data')
+        
+        if user_data:
+            print(f"✅ Session check - User authenticated:")
+            print(f"   User ID: {user_data['user_id']}")
+            print(f"   Email: {user_data['user_email']}")
+            print(f"   User Name: {user_data.get('user_name', 'N/A')}")
+            print(f"   User Role: {user_data.get('user_role', 'N/A')}")
+            print(f"   Company ID: {user_data['company_id']}")
+            print(f"   Company Name: {user_data.get('company_name', 'N/A')}")
+            print(f"   Location ID: {user_data['location_id']}")
+            print(f"   Location Name: {user_data.get('location_name', 'N/A')}")
+            print(f"   Session created: {user_data.get('session_created')}")
+            print(f"   Last activity: {user_data.get('last_activity')}")
+            print(f"   Session version: {user_data.get('session_version', '1.0')}")
+            print(f"   Detection methods: {', '.join(user_data.get('detection_methods', []))}")
+            
+            # Display GHL context if available
+            if 'ghl_context' in user_data:
+                print(f"   GHL Context available: {list(user_data['ghl_context'].keys())}")
+            
+            return JsonResponse({
+                'success': True,
+                'is_authenticated': True,
+                'user_data': user_data,
+                'session_id': request.session.session_key,
+                'timestamp': timezone.now().isoformat()
+            })
+        else:
+            print("ℹ️ Session check - No user session found")
+            return JsonResponse({
+                'success': True,
+                'is_authenticated': False,
+                'message': 'No active session found',
+                'timestamp': timezone.now().isoformat()
+            })
+
+    except Exception as e:
+        print(f"❌ Session check error: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
         }, status=500)
