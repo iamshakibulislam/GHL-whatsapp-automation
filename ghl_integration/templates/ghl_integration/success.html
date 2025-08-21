@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoHighLevel App Installed Successfully</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: #4CAF50;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 40px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+        .details {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .label {
+            font-weight: 600;
+            color: #555;
+        }
+        .value {
+            color: #333;
+        }
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin: 10px 0;
+        }
+        .status.active {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.new {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .message {
+            color: #666;
+            line-height: 1.6;
+            margin: 20px 0;
+        }
+        .close-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .close-btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-icon">✓</div>
+        <h1>
+            {% if waiting_for_webhook %}
+                App Authorization Successful!
+            {% else %}
+                App Installed Successfully!
+            {% endif %}
+        </h1>
+        
+        <p class="message">
+            {% if waiting_for_webhook %}
+                {{ message|default:"Your GoHighLevel app has been authorized successfully!" }}
+            {% elif created %}
+                Your GoHighLevel app has been successfully installed and configured.
+            {% else %}
+                Your GoHighLevel app integration has been updated successfully.
+            {% endif %}
+        </p>
+        
+        {% if waiting_for_webhook %}
+        <div class="details">
+            <div class="detail-row">
+                <span class="label">Status:</span>
+                <span class="value">Waiting for GoHighLevel to complete installation</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Next Step:</span>
+                <span class="value">GoHighLevel will send location details via webhook</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Note:</span>
+                <span class="value">You can close this window and return to GoHighLevel</span>
+            </div>
+        </div>
+        {% else %}
+        
+        <div class="details">
+            <div class="detail-row">
+                <span class="label">Location:</span>
+                <span class="value">{{ integration.location_name|default:integration.location_id }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">User:</span>
+                <span class="value">{{ integration.user_email|default:"N/A" }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Company:</span>
+                <span class="value">{{ integration.company_name|default:"N/A" }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Status:</span>
+                <span class="status {% if integration.is_active %}active{% endif %}">
+                    {% if integration.is_active %}Active{% else %}Inactive{% endif %}
+                </span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Installation Type:</span>
+                <span class="status {% if created %}new{% endif %}">
+                    {% if created %}New Installation{% else %}Updated{% endif %}
+                </span>
+            </div>
+        </div>
+        {% endif %}
+        
+        <p class="message">
+            {% if waiting_for_webhook %}
+                {{ details|default:"GoHighLevel will complete the installation process and send location details via webhook. You can close this window and return to GoHighLevel." }}
+            {% else %}
+                You can now close this window and return to GoHighLevel. 
+                The app will be available in your GoHighLevel dashboard.
+            {% endif %}
+        </p>
+        
+        <button class="close-btn" onclick="window.close()">Close Window</button>
+    </div>
+</body>
+</html>
