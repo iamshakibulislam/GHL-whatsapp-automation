@@ -1,3 +1,5 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -207,21 +209,17 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🚀 WhatReach</h1>
-            <p>GoHighLevel Integration Dashboard</p>
+            <h1><img src="{% static 'ghl_integration/logo.png' %}" alt="WhatReach Logo" style="width: 100px; height: 100px;"></h1>
+            <p>WhatReach - Reach anyone anytime </p>
         </div>
         
         <div class="content">
-            <!-- Always show the main app content -->
-            <div class="status-section">
-                <h3>✅ Welcome to WhatReach</h3>
-                <div id="status">🎉 Connected to GoHighLevel!</div>
-            </div>
+        
 
             <!-- Access token form - shown/hidden by JavaScript -->
             <div class="status-section" id="token-form-section" style="display: none;">
                 <h3>🔗 Connect WhatReach</h3>
-                <p>Enter your WhatReach access token to connect your WhatsApp account.</p>
+                <p>Enter your WhatReach access token to connect your WhatReach account.</p>
                 
                 <div class="connection-form" style="margin-top: 20px;">
                     <form id="whatsapp-connection-form">
