@@ -557,10 +557,19 @@ def test_connectivity(request):
         }, status=500)
 
 
+@csrf_exempt
+@require_http_methods(["GET", "POST", "DELETE", "OPTIONS"])
 def manage_whatsapp_token(request):
     """
     API endpoint to manage WhatsApp access tokens
     """
+    if request.method == "OPTIONS":
+        response = JsonResponse({})
+        response["Access-Control-Allow-Origin"] = "*"
+        response["Access-Control-Allow-Methods"] = "GET, POST, DELETE, OPTIONS"
+        response["Access-Control-Allow-Headers"] = "Content-Type"
+        return response
+        
     if request.method == 'GET':
         # Get token for a specific location
         location_id = request.GET.get('location_id')
