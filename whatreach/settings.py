@@ -186,6 +186,10 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = True  # For development - remove in production
 
+MAIN_DOMAIN = 'https://579bb249ce6d.ngrok-free.app'
+
+WHATREACH_WEBHOOK_URL = f'{MAIN_DOMAIN}/app/whatreach-webhook/'
+
 # Additional security headers for GoHighLevel
 SECURE_REFERRER_POLICY = 'no-referrer-when-downgrade'
 
