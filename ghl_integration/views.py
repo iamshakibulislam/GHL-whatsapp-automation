@@ -796,12 +796,16 @@ def user_identification(request):
                     'user_id': decrypted_data.get('userId') or decrypted_data.get('id'),
                     'company_id': decrypted_data.get('companyId'),
                     'user_email': decrypted_data.get('email'),
-                    'user_name': decrypted_data.get('userName') or decrypted_data.get('name'),
+                    'user_name': decrypted_data.get('userName') or decrypted_data.get('name') or decrypted_data.get('firstName') or decrypted_data.get('lastName') or decrypted_data.get('fullName'),
                     'user_role': decrypted_data.get('role'),
                     'location_name': decrypted_data.get('locationName'),
                     'company_name': decrypted_data.get('companyName'),
                     'detection_methods': ['PostMessage + Frontend Decryption']
                 })
+                
+                print(f"🔍 RAW DECRYPTED DATA DEBUG:")
+                for key, value in decrypted_data.items():
+                    print(f"   {key}: {value}")
                 
                 print(f"✅ User data received (frontend decrypted):")
                 print(f"   User ID: {user_data['user_id']}")
@@ -863,7 +867,7 @@ def user_identification(request):
                             'user_id': decrypted_data.get('userId') or decrypted_data.get('id'),
                             'company_id': decrypted_data.get('companyId'),
                             'user_email': decrypted_data.get('email'),
-                            'user_name': decrypted_data.get('userName') or decrypted_data.get('name'),
+                            'user_name': decrypted_data.get('userName') or decrypted_data.get('name') or decrypted_data.get('firstName') or decrypted_data.get('lastName') or decrypted_data.get('fullName'),
                             'user_role': decrypted_data.get('role'),
                             'location_name': decrypted_data.get('locationName'),
                             'company_name': decrypted_data.get('companyName'),

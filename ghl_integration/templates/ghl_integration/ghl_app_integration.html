@@ -290,7 +290,7 @@
                         <span id="company-display">Loading...</span>
                     </div>
                     <div class="data-item">
-                        <label>User</label>
+                        <label>Name</label>
                         <span id="user-display">Loading...</span>
                     </div>
                 </div>
@@ -406,10 +406,15 @@
             }
 
             showUserInterface(userData) {
+                console.log('🔍 showUserInterface called with userData:', userData);
+                
                 // Update user info
                 document.getElementById('location-display').textContent = userData.activeLocation || userData.locationId;
                 document.getElementById('company-display').textContent = userData.companyName || 'N/A';
-                document.getElementById('user-display').textContent = userData.email || 'N/A';
+                
+                const displayName = userData.firstName || userData.lastName || userData.name || userData.userName || userData.fullName || userData.email || 'N/A';
+                console.log('📋 Display name resolved to:', displayName);
+                document.getElementById('user-display').textContent = displayName;
                 
                 // Show user info section
                 document.getElementById('user-info-section').style.display = 'block';
@@ -419,14 +424,47 @@
                 const welcomeMessage = document.getElementById('welcome-message');
                 const userNameSpan = document.getElementById('user-name');
                 
-                // Get user's name from various possible fields
-                const userName = userData.firstName || userData.lastName || userData.name || userData.email || 'User';
+                console.log('🔍 showWelcomeMessage called with userData:', userData);
                 
-                // Update the name in the welcome message
-                userNameSpan.textContent = userName;
-                
-                // Show the welcome message
-                welcomeMessage.style.display = 'block';
+                // First try to get name from session data (most reliable)
+                this.getSessionData().then(sessionData => {
+                    console.log('📋 Session data received:', sessionData);
+                    
+                    if (sessionData && sessionData.user_name && sessionData.user_name !== 'None') {
+                        // Use session data name
+                        console.log('✅ Using session user_name:', sessionData.user_name);
+                        userNameSpan.textContent = sessionData.user_name;
+                    } else {
+                        // Fallback to userData fields
+                        const userName = userData.firstName || userData.lastName || userData.name || userData.userName || userData.fullName || userData.email || 'User';
+                        console.log('⚠️ Using fallback name:', userName);
+                        userNameSpan.textContent = userName;
+                    }
+                    
+                    // Show the welcome message
+                    welcomeMessage.style.display = 'block';
+                }).catch((error) => {
+                    console.error('❌ Session fetch failed:', error);
+                    // Fallback if session fetch fails
+                    const userName = userData.firstName || userData.lastName || userData.name || userData.userName || userData.fullName || userData.email || 'User';
+                    console.log('⚠️ Using fallback name (after error):', userName);
+                    userNameSpan.textContent = userName;
+                    welcomeMessage.style.display = 'block';
+                });
+            }
+            
+            async getSessionData() {
+                try {
+                    const response = await fetch('/app/check-session/');
+                    const data = await response.json();
+                    if (data.success && data.is_authenticated) {
+                        return data.user_data;
+                    }
+                    return null;
+                } catch (error) {
+                    console.error('❌ Failed to fetch session data:', error);
+                    return null;
+                }
             }
 
             checkAccessToken(locationId) {
