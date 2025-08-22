@@ -204,6 +204,34 @@
             border: 1px solid #e9ecef;
             background-color: #f8f9fa;
         }
+        
+        #welcome-message {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
+            animation: slideInFromTop 0.5s ease-out;
+        }
+        
+        @keyframes slideInFromTop {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        #welcome-message h3 {
+            margin: 0;
+            color: white;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -240,6 +268,11 @@
 
             <!-- Connected status - shown/hidden by JavaScript -->
             <div class="status-section" id="connected-section" style="display: none;">
+                <!-- Welcome Message - Inside Connected Section -->
+                <div id="welcome-message">
+                    <h3>👋 Welcome, <span id="user-name">User</span>!</h3>
+                </div>
+                
                 <h3>🔗 WhatReach Connected</h3>
                 <p>Your WhatReach account is connected and ready to use.</p>
             </div>
@@ -381,6 +414,20 @@
                 // Show user info section
                 document.getElementById('user-info-section').style.display = 'block';
             }
+            
+            showWelcomeMessage(userData) {
+                const welcomeMessage = document.getElementById('welcome-message');
+                const userNameSpan = document.getElementById('user-name');
+                
+                // Get user's name from various possible fields
+                const userName = userData.firstName || userData.lastName || userData.name || userData.email || 'User';
+                
+                // Update the name in the welcome message
+                userNameSpan.textContent = userName;
+                
+                // Show the welcome message
+                welcomeMessage.style.display = 'block';
+            }
 
             checkAccessToken(locationId) {
                 console.log('🔍 Checking access token for location:', locationId);
@@ -392,6 +439,11 @@
                         // User has access token - show connected status
                         console.log('✅ Access token exists');
                         document.getElementById('connected-section').style.display = 'block';
+                        
+                        // Show welcome message for existing users
+                        if (this.userData) {
+                            this.showWelcomeMessage(this.userData);
+                        }
                     } else {
                         // No access token - show form
                         console.log('❌ No access token - showing form');
@@ -451,6 +503,8 @@
                         setTimeout(() => {
                             document.getElementById('token-form-section').style.display = 'none';
                             document.getElementById('connected-section').style.display = 'block';
+                            // Show welcome message now that user is connected
+                            this.showWelcomeMessage(this.userData);
                         }, 2000);
                     } else {
                         messageContainer.innerHTML = `<div class="error-message">❌ ${result.error}</div>`;
