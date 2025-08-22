@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
-from .models import GoHighLevelIntegration, GoHighLevelWebhook
+from .models import GoHighLevelIntegration, GoHighLevelWebhook, WhatsAppAccessToken
 
 
 @admin.register(GoHighLevelIntegration)
@@ -116,3 +116,39 @@ class GoHighLevelWebhookAdmin(admin.ModelAdmin):
         updated = queryset.update(processed=False)
         self.message_user(request, f"Successfully marked {updated} webhooks as unprocessed.")
     mark_as_unprocessed.short_description = "Mark webhooks as unprocessed"
+
+
+@admin.register(WhatsAppAccessToken)
+class WhatsAppAccessTokenAdmin(admin.ModelAdmin):
+    list_display = [
+        'integration_display', 'access_token_preview', 'created_at', 'updated_at'
+    ]
+    list_filter = ['created_at', 'updated_at']
+    search_fields = [
+        'integration__location_name', 'integration__location_id'
+    ]
+    readonly_fields = [
+        'id', 'created_at', 'updated_at'
+    ]
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('integration', 'access_token')
+        }),
+        ('System', {
+            'fields': ('id', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+    
+    def integration_display(self, obj):
+        if obj.integration:
+            return f"{obj.integration.location_name} ({obj.integration.location_id})"
+        return "Unknown"
+    integration_display.short_description = 'GoHighLevel Location'
+    
+    def access_token_preview(self, obj):
+        if obj.access_token:
+            return f"{obj.access_token[:20]}..." if len(obj.access_token) > 20 else obj.access_token
+        return "No token"
+    access_token_preview.short_description = 'Access Token'

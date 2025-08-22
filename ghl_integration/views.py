@@ -11,7 +11,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.urls import reverse
 from django.db import transaction
-from .models import GoHighLevelIntegration, GoHighLevelWebhook
+from .models import GoHighLevelIntegration, GoHighLevelWebhook, WhatsAppAccessToken
 from .services import TokenRefreshService, TokenHealthService, GoHighLevelDecryptionService
 import logging
 import base64
@@ -421,8 +421,27 @@ def process_webhook(webhook):
     if event_type == 'UNINSTALL':
         # Handle app uninstallation - docs show "type": "UNINSTALL"
         print(f"Processing app uninstall for location: {webhook.integration.location_id}")
+        
+        # Deactivate the integration
         webhook.integration.is_active = False
         webhook.integration.save()
+        
+        # Delete associated WhatsApp access tokens
+        try:
+            whatsapp_tokens = WhatsAppAccessToken.objects.filter(integration=webhook.integration)
+            deleted_count = whatsapp_tokens.count()
+            
+            if deleted_count > 0:
+                print(f"🗑️ Deleting {deleted_count} WhatsApp access token(s) for uninstalled location")
+                whatsapp_tokens.delete()
+                print(f"✅ Successfully deleted {deleted_count} WhatsApp access token(s)")
+            else:
+                print(f"ℹ️ No WhatsApp access tokens found for location {webhook.integration.location_id}")
+                
+        except Exception as e:
+            print(f"⚠️ Warning: Could not delete WhatsApp access tokens: {str(e)}")
+        
+        print(f"✅ App uninstall processed successfully for location: {webhook.integration.location_id}")
     
     elif event_type == 'INSTALL':
         # Handle app installation - docs show "type": "INSTALL"
@@ -439,6 +458,8 @@ def process_webhook(webhook):
         if webhook_data.get('userId'):
             webhook.integration.user_id = webhook_data['userId']
         webhook.integration.save()
+        
+        print(f"✅ App install processed successfully for location: {webhook.integration.location_id}")
     
     else:
         print(f"Unknown webhook event type: {event_type}")
@@ -498,64 +519,164 @@ def test_connectivity(request):
     """
     Test connectivity to GoHighLevel services for debugging
     """
-    results = {}
-    
-    # Test OAuth URL
     try:
+        # Test basic connectivity
         import requests
-        response = requests.get(GHL_AUTH_URL, timeout=10)
-        results['oauth_url'] = {
-            'status': 'success',
-            'status_code': response.status_code,
-            'url': GHL_AUTH_URL
-        }
+        
+        test_urls = [
+            'https://services.leadconnectorhq.com/oauth/token',
+            'https://services.leadconnectorhq.com/oauth/authorize',
+            'https://rest.gohighlevel.com/v1/'
+        ]
+        
+        results = {}
+        for url in test_urls:
+            try:
+                response = requests.get(url, timeout=10)
+                results[url] = {
+                    'status_code': response.status_code,
+                    'accessible': response.status_code < 400
+                }
+            except Exception as e:
+                results[url] = {
+                    'status_code': None,
+                    'accessible': False,
+                    'error': str(e)
+                }
+        
+        return JsonResponse({
+            'success': True,
+            'connectivity_test': results,
+            'timestamp': timezone.now().isoformat()
+        })
+        
     except Exception as e:
-        results['oauth_url'] = {
-            'status': 'error',
-            'error': str(e),
-            'url': GHL_AUTH_URL
-        }
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+def manage_whatsapp_token(request):
+    """
+    API endpoint to manage WhatsApp access tokens
+    """
+    if request.method == 'GET':
+        # Get token for a specific location
+        location_id = request.GET.get('location_id')
+        if not location_id:
+            return JsonResponse({
+                'error': 'location_id parameter is required'
+            }, status=400)
+        
+        try:
+            integration = GoHighLevelIntegration.objects.get(location_id=location_id)
+            try:
+                token = WhatsAppAccessToken.objects.get(integration=integration)
+                return JsonResponse({
+                    'success': True,
+                    'token': {
+                        'id': str(token.id),
+                        'access_token': token.access_token[:20] + '...' if len(token.access_token) > 20 else token.access_token,
+                        'created_at': token.created_at.isoformat(),
+                        'updated_at': token.updated_at.isoformat()
+                    }
+                })
+            except WhatsAppAccessToken.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'No WhatsApp access token found for this location'
+                }, status=404)
+                
+        except GoHighLevelIntegration.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'No GoHighLevel integration found for this location'
+            }, status=404)
     
-    # Test Token URL (HEAD request to check if reachable)
-    try:
-        response = requests.head(GHL_TOKEN_URL, timeout=10)
-        results['token_url'] = {
-            'status': 'success',
-            'status_code': response.status_code,
-            'url': GHL_TOKEN_URL
-        }
-    except Exception as e:
-        results['token_url'] = {
-            'status': 'error',
-            'error': str(e),
-            'url': GHL_TOKEN_URL
-        }
+    elif request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            location_id = data.get('location_id')
+            access_token = data.get('access_token')
+            
+            if not all([location_id, access_token]):
+                return JsonResponse({
+                    'error': 'location_id and access_token are required'
+                }, status=400)
+            
+            # Check if integration exists
+            try:
+                integration = GoHighLevelIntegration.objects.get(location_id=location_id)
+            except GoHighLevelIntegration.DoesNotExist:
+                return JsonResponse({
+                    'error': 'No GoHighLevel integration found for this location'
+                }, status=404)
+            
+            # Check if token already exists
+            token, created = WhatsAppAccessToken.objects.get_or_create(
+                integration=integration,
+                defaults={
+                    'access_token': access_token
+                }
+            )
+            
+            if not created:
+                # Update existing token
+                token.access_token = access_token
+            
+            token.save()
+            
+            action = 'created' if created else 'updated'
+            return JsonResponse({
+                'success': True,
+                'message': f'WhatsApp access token {action} successfully',
+                'token_id': str(token.id),
+                'action': action
+            })
+            
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'error': 'Invalid JSON data'
+            }, status=400)
+        except Exception as e:
+            return JsonResponse({
+                'error': f'Failed to manage token: {str(e)}'
+            }, status=500)
     
-    # Test API Base
-    try:
-        response = requests.head(GHL_API_BASE, timeout=10)
-        results['api_base'] = {
-            'status': 'success',
-            'status_code': response.status_code,
-            'url': GHL_API_BASE
-        }
-    except Exception as e:
-        results['api_base'] = {
-            'status': 'error',
-            'error': str(e),
-            'url': GHL_API_BASE
-        }
+    elif request.method == 'DELETE':
+        # Delete token
+        location_id = request.GET.get('location_id')
+        if not location_id:
+            return JsonResponse({
+                'error': 'location_id parameter is required'
+            }, status=400)
+        
+        try:
+            integration = GoHighLevelIntegration.objects.get(location_id=location_id)
+            try:
+                token = WhatsAppAccessToken.objects.get(integration=integration)
+                token.delete()
+                return JsonResponse({
+                    'success': True,
+                    'message': 'WhatsApp access token deleted successfully'
+                })
+            except WhatsAppAccessToken.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'No WhatsApp access token found for this location'
+                }, status=404)
+                
+        except GoHighLevelIntegration.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'No GoHighLevel integration found for this location'
+            }, status=404)
     
-    # Add configuration info
-    results['config'] = {
-        'client_id': GHL_CLIENT_ID[:10] + '...' if len(GHL_CLIENT_ID) > 10 else GHL_CLIENT_ID,
-        'redirect_uri': GHL_REDIRECT_URI,
-        'auth_url': GHL_AUTH_URL,
-        'token_url': GHL_TOKEN_URL,
-        'api_base': GHL_API_BASE
-    }
-    
-    return JsonResponse(results)
+    else:
+        return JsonResponse({
+            'error': 'Method not allowed'
+        }, status=405)
 
 
 def token_health_summary(request):
@@ -1319,28 +1440,40 @@ def ghl_app_integration(request):
         
         # Check if we have an integration for this location
         try:
-            integration = GoHighLevelIntegration.objects.get(
-                location_id=user_data['location_id'],
-                is_active=True
-            )
-            context = {
-                'user_data': user_data,
-                'integration': integration,
+            integration = GoHighLevelIntegration.objects.get(location_id=user_data['location_id'])
+            print(f"   ✅ Found GoHighLevel integration: {integration.id}")
+            
+            # Check if WhatsApp access token exists for this location
+            has_whatsapp_token = False
+            try:
+                whatsapp_token = WhatsAppAccessToken.objects.get(integration=integration)
+                has_whatsapp_token = True
+                print(f"   WhatsApp Token: ✅ Found")
+            except WhatsAppAccessToken.DoesNotExist:
+                print(f"   WhatsApp Token: ❌ Not configured")
+                print(f"   This should show the connection form")
+            
+            print(f"   Final has_whatsapp_token value: {has_whatsapp_token}")
+            
+            # Render the authenticated template
+            return render(request, 'ghl_integration/ghl_app_integration.html', {
                 'is_authenticated': True,
+                'user_data': user_data,
+                'has_whatsapp_token': has_whatsapp_token,
                 'session_created': user_data.get('session_created'),
                 'last_activity': user_data.get('last_activity')
-            }
+            })
+            
         except GoHighLevelIntegration.DoesNotExist:
-            context = {
-                'user_data': user_data,
-                'integration': None,
+            print(f"   ❌ No GoHighLevel integration found for location: {user_data['location_id']}")
+            # Still render the template but show no integration message
+            return render(request, 'ghl_integration/ghl_app_integration.html', {
                 'is_authenticated': True,
+                'user_data': user_data,
+                'has_whatsapp_token': False,
                 'session_created': user_data.get('session_created'),
-                'last_activity': user_data.get('last_activity'),
-                'message': 'Integration not found for this location'
-            }
-        
-        return render(request, 'ghl_integration/ghl_app_integration.html', context)
+                'last_activity': user_data.get('last_activity')
+            })
     
     else:
         # No session, show unauthenticated content

@@ -50,4 +50,5 @@ urlpatterns = [
     
     # Testing and debugging
     path('test-connectivity/', views.test_connectivity, name='test_connectivity'),
+    path('whatsapp-token/', views.manage_whatsapp_token, name='manage_whatsapp_token'),
 ]

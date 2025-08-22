@@ -157,6 +157,51 @@
             margin: 20px 0;
             border: 1px solid #ffeaa7;
         }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 8px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        .form-input:focus {
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        .connect-button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        .connect-button:hover {
+            background: #218838;
+        }
+        .connect-button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        #message-container {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            background-color: #f8f9fa;
+        }
     </style>
 </head>
 <body>
@@ -167,128 +212,58 @@
         </div>
         
         <div class="content">
-            {% if is_authenticated %}
-                <!-- Authenticated User Content -->
-                <div class="status-section">
-                    <h3>✅ Authenticated User</h3>
-                    <div id="status">🎉 Welcome back! You're authenticated via session.</div>
-                </div>
+            <!-- Always show the main app content -->
+            <div class="status-section">
+                <h3>✅ Welcome to WhatReach</h3>
+                <div id="status">🎉 Connected to GoHighLevel!</div>
+            </div>
 
-                <div class="data-grid">
-                    <div class="data-item">
-                        <label>User ID</label>
-                        <span id="user-id">{{ user_data.user_id }}</span>
-                    </div>
-                    <div class="data-item">
-                        <label>User Email</label>
-                        <span id="user-email">{{ user_data.user_email|default:"N/A" }}</span>
-                    </div>
-                    <div class="data-item">
-                        <label>Company ID</label>
-                        <span id="company-id">{{ user_data.company_id }}</span>
-                    </div>
-                    <div class="data-item">
-                        <label>Location ID</label>
-                        <span id="location-id">{{ user_data.location_id }}</span>
-                    </div>
-                    <div class="data-item">
-                        <label>Session Created</label>
-                        <span id="session-created">{{ session_created|default:"N/A" }}</span>
-                    </div>
-                    <div class="data-item">
-                        <label>Last Activity</label>
-                        <span id="last-activity">{{ last_activity|default:"N/A" }}</span>
-                    </div>
-                </div>
-
-                {% if integration %}
-                    <div class="status-section">
-                        <h3>🔗 GoHighLevel Integration</h3>
-                        <div class="data-grid">
-                            <div class="data-item">
-                                <label>Location Name</label>
-                                <span>{{ integration.location_name|default:"N/A" }}</span>
-                            </div>
-                            <div class="data-item">
-                                <label>Company Name</label>
-                                <span>{{ integration.company_name|default:"N/A" }}</span>
-                            </div>
-                            <div class="data-item">
-                                <label>Integration Status</label>
-                                <span>✅ Active</span>
-                            </div>
+            <!-- Access token form - shown/hidden by JavaScript -->
+            <div class="status-section" id="token-form-section" style="display: none;">
+                <h3>🔗 Connect WhatReach</h3>
+                <p>Enter your WhatReach access token to connect your WhatsApp account.</p>
+                
+                <div class="connection-form" style="margin-top: 20px;">
+                    <form id="whatsapp-connection-form">
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="access-token" style="display: block; margin-bottom: 8px; font-weight: 600; color: #495057;">Access Token</label>
+                            <input type="text" id="access-token" class="form-input" placeholder="Enter your WhatReach access token" required 
+                                   style="width: 100%; padding: 12px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 16px; transition: border-color 0.3s;">
                         </div>
-                    </div>
-                {% else %}
-                    <div class="info-message">
-                        <h4>⚠️ Integration Not Found</h4>
-                        <p>No GoHighLevel integration found for location ID: {{ user_data.location_id }}</p>
-                        <p>This usually means the app needs to be installed or the integration is inactive.</p>
-                    </div>
-                {% endif %}
-
-                <div class="log-section">
-                    <h3>📝 Session Information</h3>
-                    <div id="log">
-                        ✅ User authenticated via session
-                        📅 Session created: {{ session_created|default:"N/A" }}
-                        🕒 Last activity: {{ last_activity|default:"N/A" }}
-                        🔑 Detection methods: {{ user_data.detection_methods|join:", " }}
-                    </div>
-                    <div style="margin-top: 15px;">
-                        <button class="button" onclick="logoutUser()">🚪 Logout</button>
-                        <button class="button" onclick="refreshSession()">🔄 Refresh Session</button>
-                    </div>
+                        
+                        <button type="submit" class="connect-button" id="connect-btn" style="background: #28a745; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; transition: background 0.3s;">
+                            <span id="connect-text">Save Access Token</span>
+                        </button>
+                    </form>
+                    
+                    <div id="message-container" style="margin-top: 20px;"></div>
                 </div>
+            </div>
 
-            {% else %}
-                <!-- Unauthenticated User Content -->
-                <div class="status-section">
-                    <h3>🔐 Authentication Required</h3>
-                    <div id="status">{{ message|default:"Please authenticate with GoHighLevel to continue." }}</div>
-                </div>
+            <!-- Connected status - shown/hidden by JavaScript -->
+            <div class="status-section" id="connected-section" style="display: none;">
+                <h3>🔗 WhatReach Connected</h3>
+                <p>Your WhatReach account is connected and ready to use.</p>
+            </div>
 
+            <!-- User info section -->
+            <div class="log-section" id="user-info-section" style="display: none;">
+                <h3>📝 Account Information</h3>
                 <div class="data-grid">
                     <div class="data-item">
-                        <label>User ID</label>
-                        <span id="user-id">⏳ Waiting for authentication...</span>
-                    </div>
-                    <div class="data-item">
-                        <label>User Email</label>
-                        <span id="user-email">⏳ Waiting for authentication...</span>
-                    </div>
-                    <div class="data-item">
-                        <label>User Name</label>
-                        <span id="user-name">⏳ Waiting for authentication...</span>
-                    </div>
-                    <div class="data-item">
-                        <label>User Role</label>
-                        <span id="user-role">⏳ Waiting for authentication...</span>
-                    </div>
-                    <div class="data-item">
                         <label>Location ID</label>
-                        <span id="location-id">⏳ Waiting for authentication...</span>
+                        <span id="location-display">Loading...</span>
                     </div>
                     <div class="data-item">
-                        <label>Location Name</label>
-                        <span id="location-name">⏳ Waiting for authentication...</span>
+                        <label>Company</label>
+                        <span id="company-display">Loading...</span>
                     </div>
                     <div class="data-item">
-                        <label>Company ID</label>
-                        <span id="company-id">⏳ Waiting for authentication...</span>
+                        <label>User</label>
+                        <span id="user-display">Loading...</span>
                     </div>
                 </div>
-
-                <div class="log-section">
-                    <h3>📝 Activity Log</h3>
-                    <div id="log">🚀 WhatReach: Initializing GoHighLevel App...</div>
-                </div>
-
-                <div class="iframe-info">
-                    <h4>ℹ️ Iframe Information</h4>
-                    <p>This page is designed to be loaded within GoHighLevel's iframe. If you're seeing this page directly, it won't function properly.</p>
-                </div>
-            {% endif %}
+            </div>
         </div>
     </div>
 
@@ -296,374 +271,206 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
     <script>
-        class GoHighLevelApp {
+        class WhatReachApp {
             constructor() {
-                this.logElement = document.getElementById('log');
-                this.dataElement = document.getElementById('data');
-                this.statusElement = document.getElementById('status');
-                this.userIdElement = document.getElementById('user-id');
-                this.userEmailElement = document.getElementById('user-email');
-                this.userNameElement = document.getElementById('user-name');
-                this.userRoleElement = document.getElementById('user-role');
-                this.locationIdElement = document.getElementById('location-id');
-                this.locationNameElement = document.getElementById('location-name');
-                this.companyIdElement = document.getElementById('company-id');
-                this.messageCount = 0;
                 this.userData = null;
-                this.locationData = null;
-                this.sharedSecret = '3451a19d-c451-4b24-9323-f8e000cbb805'; // Your shared secret
+                this.sharedSecret = '3451a19d-c451-4b24-9323-f8e000cbb805';
                 this.init();
             }
 
             init() {
-                this.log('🚀 WhatReach: Initializing GoHighLevel App...');
-                this.log(`🔑 Shared Secret: ${this.sharedSecret.substring(0, 8)}...${this.sharedSecret.substring(this.sharedSecret.length - 8)}`);
+                console.log('🚀 WhatReach: Starting...');
                 
-                if (window.self === window.top) {
-                    this.updateStatus('❌ Not in iframe - this page should be loaded within GoHighLevel', 'error');
-                    this.log('❌ Not in iframe - this page should be loaded within GoHighLevel');
-                } else {
-                    this.updateStatus('✅ In iframe mode - setting up communication...', 'success');
-                    this.log('✅ In iframe mode - setting up communication...');
-                    this.setupMessageListener();
-                    this.sendReadyMessage();
-                    this.requestUserData(); // Request user data immediately
-                }
-                this.setupIframeResizer();
+                // Always set up GoHighLevel authentication
+                this.setupGoHighLevelAuth();
+                
+                // Set up form submission
+                this.setupFormSubmission();
             }
 
-            setupMessageListener() {
-                this.log('🔧 Setting up message listener...');
+            setupGoHighLevelAuth() {
+                console.log('🔧 Setting up GoHighLevel authentication...');
+                
+                // Listen for postMessage from GoHighLevel
                 window.addEventListener('message', (event) => {
-                    this.messageCount++;
-                    this.log(`📨 Message #${this.messageCount} received`);
-                    this.updateData(event.data);
-
+                    console.log('📨 Received message:', event.data);
+                    
                     if (event.data && event.data.message) {
                         switch (event.data.message) {
                             case 'REQUEST_USER_DATA_RESPONSE':
                             case 'USER_DATA':
                             case 'AUTH_DATA':
-                                this.log('🎉 User data received');
                                 const data = event.data.payload || event.data.user || event.data;
-
-                                // Check if data is encrypted
+                                
                                 if (typeof data === 'string' && data.length > 100) {
-                                    this.log('🔐 Encrypted user data detected - decrypting...');
-
-                                    // Show encrypted data status
-                                    this.userIdElement.textContent = '🔐 Decrypting...';
-                                    this.userEmailElement.textContent = '🔐 Decrypting...';
-                                    this.userNameElement.textContent = '🔐 Decrypting...';
-                                    this.userRoleElement.textContent = '🔐 Decrypting...';
-
-                                    // Update status
-                                    this.updateStatus('🔐 Decrypting user data...', 'info');
-
-                                    // Decrypt using CryptoJS directly
-                                    this.decryptUserDataWithCryptoJS(data);
-
-                                } else if (data && typeof data === 'object') {
-                                    // Regular unencrypted data
-                                    this.userData = data;
-                                    if (data.id) this.userIdElement.textContent = data.id;
-                                    if (data.email) this.userEmailElement.textContent = data.email;
-                                    if (data.name || data.firstName) this.userNameElement.textContent = data.name || data.firstName;
-                                    if (data.role) this.userRoleElement.textContent = data.role;
-                                    this.updateStatus('✅ User data received successfully!', 'success');
-                                } else {
-                                    this.log('⚠️ User data format not recognized');
-                                    this.userIdElement.textContent = '⚠️ Format not recognized';
-                                    this.updateStatus('⚠️ User data format not recognized', 'warning');
+                                    console.log('🔐 Encrypted data detected - decrypting...');
+                                    this.decryptAndCreateSession(data);
                                 }
                                 break;
-                            case 'LOCATION_DATA':
-                                this.log('🎉 Location data received');
-                                this.locationData = event.data.payload || event.data.location || event.data;
-                                if (this.locationData.id) this.locationIdElement.textContent = this.locationData.id;
-                                if (this.locationData.name) this.locationNameElement.textContent = this.locationData.name;
-                                if (this.locationData.companyId) this.companyIdElement.textContent = this.locationData.companyId;
-                                break;
-                            default:
-                                this.log(`📨 Received: ${event.data.message}`);
-                                if (event.data.user || event.data.location || event.data.payload) {
-                                    this.log('✅ Message contains user/location data!');
-                                    this.updateStatus('✅ Data received!', 'success');
-                                }
-                        }
-                    } else if (event.data && (event.data.user || event.data.location)) {
-                        this.log('✅ Received direct data without message wrapper!');
-                        this.updateStatus('✅ Direct data received!', 'success');
-                        if (event.data.user) {
-                            this.userData = event.data.user;
-                            if (this.userData.id) this.userIdElement.textContent = this.userData.id;
-                            if (this.userData.email) this.userIdElement.textContent = this.userData.email;
-                            if (this.userData.name || this.userData.firstName) this.userNameElement.textContent = this.userData.name || this.userData.firstName;
-                            if (this.userData.role) this.userRoleElement.textContent = this.userData.role;
-                        }
-                        if (event.data.location) {
-                            this.locationData = event.data.location;
-                            if (this.locationData.id) this.locationIdElement.textContent = this.locationData.id;
-                            if (this.locationData.name) this.locationNameElement.textContent = this.locationData.name;
-                            if (this.locationData.companyId) this.companyIdElement.textContent = this.locationData.companyId;
                         }
                     }
-                    this.showInfoSections();
                 });
-                this.log('✅ Message listener set up successfully');
-            }
-
-            decryptUserDataWithCryptoJS(encryptedData) {
-                this.log('🔓 Decrypting user data using CryptoJS...');
-
-                try {
-                    // Use the EXACT CryptoJS method from GoHighLevel docs
-                    const decrypted = CryptoJS.AES.decrypt(
-                        encryptedData,
-                        this.sharedSecret
-                    ).toString(CryptoJS.enc.Utf8);
-
-                    this.log('✅ CryptoJS decryption successful!');
-
-                    if (decrypted) {
-                        try {
-                            // Parse the decrypted JSON
-                            const userData = JSON.parse(decrypted);
-                            this.log('✅ JSON parsing successful!');
-
-                            // Update UI with decrypted data
-                            if (userData.userId) this.userIdElement.textContent = userData.userId;
-                            if (userData.email) this.userEmailElement.textContent = userData.email;
-                            if (userData.userName) this.userNameElement.textContent = userData.userName;
-                            if (userData.role) this.userRoleElement.textContent = userData.role;
-                            if (userData.activeLocation) this.locationIdElement.textContent = userData.activeLocation;
-                            if (userData.companyId) this.companyIdElement.textContent = userData.companyId;
-
-                            this.updateStatus('🎉 User data decrypted successfully!', 'success');
-                            this.showDecryptionSuccess(userData);
-
-                            // Send the encrypted data to backend for Python console logging
-                            this.sendEncryptedDataToBackend(encryptedData, userData);
-
-                        } catch (jsonError) {
-                            this.log(`❌ JSON parsing failed: ${jsonError.message}`);
-                            this.updateStatus('⚠️ Decryption successful but JSON parsing failed', 'warning');
-                            this.showDecryptionFailed('JSON parsing failed: ' + jsonError.message);
-                        }
-                    } else {
-                        this.log('❌ Decryption returned empty result');
-                        this.updateStatus('❌ Decryption returned empty result', 'error');
-                        this.showDecryptionFailed('Decryption returned empty result');
-                    }
-
-                } catch (decryptError) {
-                    this.log(`❌ CryptoJS decryption failed: ${decryptError.message}`);
-                    this.updateStatus('❌ CryptoJS decryption failed', 'error');
-                    this.showDecryptionFailed('CryptoJS decryption failed: ' + decryptError.message);
-                }
-            }
-
-            showDecryptionSuccess(decryptedData) {
-                this.log('🎉 Showing decryption success...');
-                const successDiv = document.createElement('div');
-                successDiv.className = 'success-message';
-                successDiv.innerHTML = `
-                    <h3>🎉 User Data Successfully Decrypted!</h3>
-                    <p>Welcome to WhatReach!</p>
-                    <div style="margin-top: 15px; text-align: left;">
-                        <p><strong>User ID:</strong> ${decryptedData.userId || 'N/A'}</p>
-                        <p><strong>Email:</strong> ${decryptedData.email || 'N/A'}</p>
-                        <p><strong>Company ID:</strong> ${decryptedData.companyId || 'N/A'}</p>
-                        <p><strong>Active Location:</strong> ${decryptedData.activeLocation || 'N/A'}</p>
-                    </div>
-                `;
-                const header = document.querySelector('.header');
-                header.parentNode.insertBefore(successDiv, header.nextSibling);
-                setTimeout(() => {
-                    if (successDiv.parentNode) {
-                        successDiv.parentNode.removeChild(successDiv);
-                    }
-                }, 10000);
-            }
-
-            showDecryptionFailed(errorMessage) {
-                this.log('❌ Showing decryption failed...');
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'error-message';
-                errorDiv.innerHTML = `
-                    <h3>❌ Decryption Failed</h3>
-                    <p>Could not decrypt user data from GoHighLevel.</p>
-                    <p><strong>Error:</strong> ${errorMessage}</p>
-                    <p>Please check your shared secret key configuration.</p>
-                `;
-                const header = document.querySelector('.header');
-                header.parentNode.insertBefore(errorDiv, header.nextSibling);
-                setTimeout(() => {
-                    if (errorDiv.parentNode) {
-                        errorDiv.parentNode.removeChild(errorDiv);
-                    }
-                }, 15000);
-            }
-
-            log(message, data = null) {
-                const timestamp = new Date().toLocaleTimeString();
-                const logMessage = `[${timestamp}] ${message}`;
-                this.logElement.textContent += logMessage + '\n';
                 
-                if (data) {
-                    this.logElement.textContent += JSON.stringify(data, null, 2) + '\n';
-                }
-                
-                this.logElement.scrollTop = this.logElement.scrollHeight;
-                console.log(logMessage, data);
-            }
-
-            updateStatus(message, type = 'info') {
-                this.statusElement.textContent = message;
-                this.statusElement.className = `status-${type}`;
-            }
-
-            updateData(data) {
-                if (this.dataElement) {
-                    this.dataElement.textContent = JSON.stringify(data, null, 2);
-                }
-            }
-
-            sendReadyMessage() {
-                this.log('📤 Sending ready message to parent...');
+                // Request user data from GoHighLevel
                 if (window.parent && window.parent !== window.self) {
-                    window.parent.postMessage({
-                        message: 'APP_READY',
-                        timestamp: new Date().toISOString()
-                    }, '*');
-                }
-            }
-
-            requestUserData() {
-                this.log('📤 Requesting user data from parent...');
-                if (window.parent && window.parent !== window.self) {
-                    // Send multiple types of requests to see which one works
+                    console.log('📤 Requesting user data from GoHighLevel...');
+                    
                     const requests = [
                         { message: 'REQUEST_USER_DATA' },
                         { message: 'GET_USER_DATA' },
-                        { message: 'AUTH_DATA_REQUEST' },
-                        { message: 'USER_CONTEXT_REQUEST' }
+                        { message: 'AUTH_DATA_REQUEST' }
                     ];
 
                     requests.forEach((request, index) => {
                         setTimeout(() => {
-                            this.log(`📤 Sending request ${index + 1}: ${request.message}`);
                             window.parent.postMessage({
                                 ...request,
                                 timestamp: new Date().toISOString()
                             }, '*');
-                        }, index * 1000); // Send requests 1 second apart
+                        }, index * 1000);
                     });
                 }
             }
 
-            showInfoSections() {
-                // Show additional info sections if we have data
-                if (this.userData || this.locationData) {
-                    this.log('📊 Data received, showing info sections...');
+            decryptAndCreateSession(encryptedData) {
+                try {
+                    console.log('🔓 Decrypting user data...');
+                    
+                    const decrypted = CryptoJS.AES.decrypt(encryptedData, this.sharedSecret).toString(CryptoJS.enc.Utf8);
+                    
+                    if (decrypted) {
+                        const userData = JSON.parse(decrypted);
+                        console.log('✅ Decryption successful:', userData);
+                        
+                        this.userData = userData;
+                        this.createSession(userData);
+                    }
+                } catch (error) {
+                    console.error('❌ Decryption failed:', error);
                 }
             }
 
-            setupIframeResizer() {
-                // Auto-resize iframe to fit content
-                if (window.parent && window.parent !== window.self) {
-                    const resizeObserver = new ResizeObserver(() => {
-                        const height = document.documentElement.scrollHeight;
-                        window.parent.postMessage({
-                            message: 'RESIZE_IFRAME',
-                            height: height
-                        }, '*');
-                    });
-                    resizeObserver.observe(document.body);
-                }
-            }
-
-            logoutUser() {
-                // This will be called from the HTML button
-                window.location.href = '/app/logout/';
-            }
-
-            refreshSession() {
-                // This will be called from the HTML button
-                window.location.reload();
-            }
-
-            sendEncryptedDataToBackend(encryptedData, decryptedData) {
-                this.log('📤 Sending encrypted data to backend for logging...');
-
-                const contextData = {
-                    encrypted_user_data: encryptedData,
-                    decrypted_user_data: decryptedData,
-                    timestamp: new Date().toISOString(),
-                    method: 'postMessage',
-                    needs_decryption: false,
-                    decryption_successful: true
-                };
-
+            createSession(userData) {
+                console.log('🔄 Creating session...');
+                
                 fetch('/app/user-identification/', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        context: contextData,
-                        timestamp: new Date().toISOString()
+                        context: {
+                            decrypted_user_data: userData,
+                            decryption_successful: true
+                        }
                     })
                 })
                 .then(response => response.json())
-                .then(result => {
-                    this.log('✅ Data sent to backend successfully');
-                    console.log('✅ Backend response:', result);
+                .then(data => {
+                    if (data.success) {
+                        console.log('✅ Session created successfully');
+                        this.showUserInterface(userData);
+                        this.checkAccessToken(userData.activeLocation || userData.locationId);
+                    }
+                })
+                .catch(error => console.error('❌ Session creation failed:', error));
+            }
+
+            showUserInterface(userData) {
+                // Update user info
+                document.getElementById('location-display').textContent = userData.activeLocation || userData.locationId;
+                document.getElementById('company-display').textContent = userData.companyName || 'N/A';
+                document.getElementById('user-display').textContent = userData.email || 'N/A';
+                
+                // Show user info section
+                document.getElementById('user-info-section').style.display = 'block';
+            }
+
+            checkAccessToken(locationId) {
+                console.log('🔍 Checking access token for location:', locationId);
+                
+                fetch(`/app/whatsapp-token/?location_id=${locationId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.token) {
+                        // User has access token - show connected status
+                        console.log('✅ Access token exists');
+                        document.getElementById('connected-section').style.display = 'block';
+                    } else {
+                        // No access token - show form
+                        console.log('❌ No access token - showing form');
+                        document.getElementById('token-form-section').style.display = 'block';
+                    }
                 })
                 .catch(error => {
-                    this.log(`❌ Error sending data to backend: ${error.message}`);
-                    console.log('❌ Backend error:', error);
+                    console.error('❌ Error checking token:', error);
+                    // Show form by default if there's an error
+                    document.getElementById('token-form-section').style.display = 'block';
+                });
+            }
+
+            setupFormSubmission() {
+                const form = document.getElementById('whatsapp-connection-form');
+                if (form) {
+                    form.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        this.handleFormSubmission();
+                    });
+                }
+            }
+
+            handleFormSubmission() {
+                const connectBtn = document.getElementById('connect-btn');
+                const connectText = document.getElementById('connect-text');
+                const messageContainer = document.getElementById('message-container');
+                const accessTokenInput = document.getElementById('access-token');
+                
+                if (!this.userData || !this.userData.activeLocation) {
+                    messageContainer.innerHTML = '<div class="error-message">❌ User data not available. Please refresh the page.</div>';
+                    return;
+                }
+                
+                // Show loading state
+                connectBtn.disabled = true;
+                connectText.textContent = 'Saving...';
+                messageContainer.innerHTML = '';
+                
+                const formData = {
+                    location_id: this.userData.activeLocation || this.userData.locationId,
+                    access_token: accessTokenInput.value
+                };
+                
+                fetch('/app/whatsapp-token/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        messageContainer.innerHTML = `<div class="success-message">✅ ${result.message}</div>`;
+                        accessTokenInput.value = '';
+                        
+                        // Hide form and show connected status
+                        setTimeout(() => {
+                            document.getElementById('token-form-section').style.display = 'none';
+                            document.getElementById('connected-section').style.display = 'block';
+                        }, 2000);
+                    } else {
+                        messageContainer.innerHTML = `<div class="error-message">❌ ${result.error}</div>`;
+                    }
+                })
+                .catch(error => {
+                    messageContainer.innerHTML = '<div class="error-message">❌ Failed to save token. Please try again.</div>';
+                })
+                .finally(() => {
+                    connectBtn.disabled = false;
+                    connectText.textContent = 'Save Access Token';
                 });
             }
         }
 
-        // Global functions for HTML buttons
-        function logoutUser() {
-            fetch('/app/logout/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    window.location.reload();
-                }
-            })
-            .catch(error => {
-                console.log('❌ Logout error:', error);
-                window.location.reload();
-            });
-        }
-
-        function refreshSession() {
-            window.location.reload();
-        }
-
+        // Initialize WhatReach App when page loads
         document.addEventListener('DOMContentLoaded', () => {
-            // Only initialize the app if user is not authenticated
-            {% if not is_authenticated %}
-                new GoHighLevelApp();
-            {% else %}
-                console.log('✅ User already authenticated via session');
-                console.log('User data:', {
-                    user_id: '{{ user_data.user_id }}',
-                    user_email: '{{ user_data.user_email|default:"" }}',
-                    company_id: '{{ user_data.company_id }}',
-                    location_id: '{{ user_data.location_id }}'
-                });
-            {% endif %}
+            new WhatReachApp();
         });
     </script>
 </body>

@@ -75,3 +75,45 @@ class GoHighLevelWebhook(models.Model):
     
     def __str__(self):
         return f"{self.event_type} - {self.integration.location_name} - {self.received_at}"
+
+
+class WhatsAppAccessToken(models.Model):
+    """
+    Model to store WhatsApp access tokens bound to GoHighLevel locations
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    # Foreign key to GoHighLevel integration (bound by location_id)
+    integration = models.OneToOneField(
+        GoHighLevelIntegration, 
+        on_delete=models.CASCADE, 
+        related_name='whatsapp_token',
+        help_text="Associated GoHighLevel integration"
+    )
+    
+    # Access token
+    access_token = models.TextField(
+        help_text="WhatsApp access token"
+    )
+    
+    # Timestamps
+    created_at = models.DateTimeField(
+        default=timezone.now,
+        help_text="When this token was created"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        help_text="When this token was last updated"
+    )
+
+    class Meta:
+        db_table = 'whatsapp_access_token'
+        verbose_name = 'WhatsApp Access Token'
+        verbose_name_plural = 'WhatsApp Access Tokens'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['integration']),
+        ]
+
+    def __str__(self):
+        return f"WhatsApp Token - {self.integration.location_id}"
